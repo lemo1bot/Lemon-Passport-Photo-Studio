@@ -1,0 +1,17 @@
+# Build & Staging Artifacts
+.build/
+build/
+*.dmg
+DerivedData/
+
+# macOS System Files
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# User local configs
+xcuserdata/
+*.xcworkspace
+*.xcuserstate
