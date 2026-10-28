@@ -565,13 +565,80 @@ function setupEventListeners() {
     renderSheet();
   });
 
-  document.getElementById('pickerBgColor').addEventListener('input', (e) => {
+  const pickerBgColor = document.getElementById('pickerBgColor');
+  const txtCustomHex = document.getElementById('txtCustomHex');
+
+  function updateCustomColor(newHex) {
     const photo = getActivePhoto();
     if (!photo) return;
-    photo.customBgColor = e.target.value;
+    saveSnapshot();
+    let cleanHex = newHex.trim();
+    if (!cleanHex.startsWith('#')) cleanHex = '#' + cleanHex;
+    photo.customBgColor = cleanHex;
+    if (pickerBgColor) pickerBgColor.value = cleanHex;
+    if (txtCustomHex) txtCustomHex.value = cleanHex.toUpperCase();
     renderCrop();
     renderSheet();
+  }
+
+  if (pickerBgColor) {
+    pickerBgColor.addEventListener('input', (e) => {
+      const photo = getActivePhoto();
+      if (!photo) return;
+      photo.customBgColor = e.target.value;
+      if (txtCustomHex) txtCustomHex.value = e.target.value.toUpperCase();
+      renderCrop();
+      renderSheet();
+    });
+    pickerBgColor.addEventListener('change', (e) => updateCustomColor(e.target.value));
+  }
+
+  if (txtCustomHex) {
+    txtCustomHex.addEventListener('input', (e) => {
+      const val = e.target.value.trim();
+      const match = val.match(/^#?([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/);
+      if (match) {
+        const hex = val.startsWith('#') ? val : '#' + val;
+        const photo = getActivePhoto();
+        if (photo) {
+          photo.customBgColor = hex;
+          if (pickerBgColor) pickerBgColor.value = hex;
+          renderCrop();
+          renderSheet();
+        }
+      }
+    });
+    txtCustomHex.addEventListener('change', (e) => {
+      const val = e.target.value.trim();
+      const match = val.match(/^#?([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/);
+      if (match) {
+        updateCustomColor(val);
+      }
+    });
+  }
+
+  // Quick Swatches Click Handler
+  document.querySelectorAll('.swatch-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const color = btn.getAttribute('data-color');
+      if (color) updateCustomColor(color);
+    });
   });
+
+  // Background Detection Sensitivity / Tolerance Slider
+  const sliderBgTolerance = document.getElementById('sliderBgTolerance');
+  const lblBgToleranceVal = document.getElementById('lblBgToleranceVal');
+  if (sliderBgTolerance) {
+    sliderBgTolerance.addEventListener('input', (e) => {
+      const photo = getActivePhoto();
+      if (!photo) return;
+      photo.bgTolerance = parseInt(e.target.value, 10);
+      if (lblBgToleranceVal) lblBgToleranceVal.textContent = formatBgTolerance(photo.bgTolerance);
+      renderCrop();
+      renderSheet();
+    });
+  }
 
   document.getElementById('selBorderStyle').addEventListener('change', (e) => {
     const photo = getActivePhoto();
@@ -1714,7 +1781,15 @@ function syncPhotoControls(photo) {
 
   document.getElementById('selBgColor').value = photo.bgMode || 'original';
   document.getElementById('customColorPickerRow').style.display = photo.bgMode === 'custom' ? 'flex' : 'none';
-  if (photo.customBgColor) document.getElementById('pickerBgColor').value = photo.customBgColor;
+  const customHex = (photo.customBgColor || '#3B82F6').toUpperCase();
+  if (document.getElementById('pickerBgColor')) document.getElementById('pickerBgColor').value = customHex;
+  if (document.getElementById('txtCustomHex')) document.getElementById('txtCustomHex').value = customHex;
+  const sliderTol = document.getElementById('sliderBgTolerance');
+  const lblTol = document.getElementById('lblBgToleranceVal');
+  if (sliderTol) {
+    sliderTol.value = photo.bgTolerance !== undefined ? photo.bgTolerance : 65;
+    if (lblTol) lblTol.textContent = formatBgTolerance(sliderTol.value);
+  }
 
   document.getElementById('selBorderStyle').value = photo.borderStyle || 'thinGray';
 
@@ -1858,6 +1933,33 @@ function renderCrop() {
 }
 
 // MARK: - Pixel Adjustment & Intelligent Background Segmentation Engine
+function parseHexColor(hexStr, defaultR = 255, defaultG = 255, defaultB = 255) {
+  if (!hexStr) return [defaultR, defaultG, defaultB];
+  let h = String(hexStr).replace('#', '').trim();
+  if (h.length === 3) {
+    h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+  }
+  if (h.length >= 6) {
+    const r = parseInt(h.substring(0, 2), 16);
+    const g = parseInt(h.substring(2, 4), 16);
+    const b = parseInt(h.substring(4, 6), 16);
+    return [
+      isNaN(r) ? defaultR : Math.max(0, Math.min(255, r)),
+      isNaN(g) ? defaultG : Math.max(0, Math.min(255, g)),
+      isNaN(b) ? defaultB : Math.max(0, Math.min(255, b))
+    ];
+  }
+  return [defaultR, defaultG, defaultB];
+}
+
+function formatBgTolerance(val) {
+  const v = parseInt(val, 10);
+  if (v < 40) return `${v} (Strict)`;
+  if (v <= 75) return `${v} (Normal)`;
+  if (v <= 100) return `${v} (Strong)`;
+  return `${v} (Max)`;
+}
+
 function getAdjustedCanvas(photo) {
   const img = photo.img;
   if (!img) return null;
@@ -1876,7 +1978,8 @@ function getAdjustedCanvas(photo) {
     photo.skinSmoothing || 0,
     photo.grayscale ? 1 : 0,
     photo.bgMode || 'original',
-    photo.customBgColor || '#FFFFFF'
+    photo.customBgColor || '#2563EB',
+    photo.bgTolerance !== undefined ? photo.bgTolerance : 65
   ].join('_');
 
   if (photo._cachedCanvas && photo._cacheKey === cacheKey) {
@@ -1931,23 +2034,24 @@ function getAdjustedCanvas(photo) {
   let targetR = 255, targetG = 255, targetB = 255;
   if (photo.bgMode && photo.bgMode !== 'original') {
     if (photo.bgMode === 'lightBlue') {
-      targetR = 216; targetG = 232; targetB = 248; // Visa Light Blue
+      targetR = 216; targetG = 232; targetB = 248; // Visa Light Blue (#D8E8F8)
     } else if (photo.bgMode === 'lightGrey') {
-      targetR = 240; targetG = 240; targetB = 240; // Light Grey
+      targetR = 240; targetG = 240; targetB = 240; // Light Grey (#F0F0F0)
     } else if (photo.bgMode === 'offWhite') {
-      targetR = 250; targetG = 248; targetB = 245; // Off-White
+      targetR = 250; targetG = 248; targetB = 245; // Off-White (#FAF8F5)
     } else if (photo.bgMode === 'red') {
-      targetR = 220; targetG = 38; targetB = 38; // Asian Visa Red
+      targetR = 220; targetG = 38; targetB = 38; // Asian Visa Red (#DC2626)
     } else if (photo.bgMode === 'pureWhite') {
       targetR = 255; targetG = 255; targetB = 255; // Pure White (#FFFFFF)
     } else if (photo.bgMode === 'custom' && photo.customBgColor) {
-      const hex = photo.customBgColor.replace('#', '');
-      targetR = parseInt(hex.substring(0, 2), 16) || 255;
-      targetG = parseInt(hex.substring(2, 4), 16) || 255;
-      targetB = parseInt(hex.substring(4, 6), 16) || 255;
+      const [cr, cg, cb] = parseHexColor(photo.customBgColor, 37, 99, 235);
+      targetR = cr;
+      targetG = cg;
+      targetB = cb;
     }
 
-    bgMask = computeBackgroundMask(data, procW, procH);
+    const tol = photo.bgTolerance !== undefined ? photo.bgTolerance : 65;
+    bgMask = computeBackgroundMask(data, procW, procH, tol);
   }
 
   // 2. Color & Lighting Adjustments (Direct pixel math supported natively on macOS WebKit)
@@ -1962,9 +2066,17 @@ function getAdjustedCanvas(photo) {
 
     if (bgMask && bgMask[pixelIdx] > 0) {
       const factor = bgMask[pixelIdx] / 255;
-      data[i] = Math.round(targetR * factor + data[i] * (1 - factor));
-      data[i + 1] = Math.round(targetG * factor + data[i + 1] * (1 - factor));
-      data[i + 2] = Math.round(targetB * factor + data[i + 2] * (1 - factor));
+      if (factor >= 0.95) {
+        // Exact crisp target color replacement
+        data[i] = targetR;
+        data[i + 1] = targetG;
+        data[i + 2] = targetB;
+      } else {
+        // Smooth edge anti-aliasing against foreground subject
+        data[i] = Math.round(targetR * factor + data[i] * (1 - factor));
+        data[i + 1] = Math.round(targetG * factor + data[i + 1] * (1 - factor));
+        data[i + 2] = Math.round(targetB * factor + data[i + 2] * (1 - factor));
+      }
     } else {
       let r = data[i];
       let g = data[i + 1];
@@ -2021,11 +2133,11 @@ function getAdjustedCanvas(photo) {
   return offCanvas;
 }
 
-function computeBackgroundMask(data, w, h) {
-  // Sample top corners to determine backdrop color
+function computeBackgroundMask(data, w, h, tolerance = 65) {
+  // Sample top corners and outer perimeter to determine backdrop color
   let sampleR = 0, sampleG = 0, sampleB = 0, count = 0;
   const sampleMargin = Math.min(15, Math.floor(w * 0.05));
-  const sampleSize = Math.min(12, Math.floor(w * 0.04));
+  const sampleSize = Math.min(16, Math.floor(w * 0.05));
 
   for (let dy = sampleMargin; dy < sampleMargin + sampleSize; dy++) {
     for (let dx = sampleMargin; dx < sampleMargin + sampleSize; dx++) {
@@ -2043,6 +2155,8 @@ function computeBackgroundMask(data, w, h) {
   sampleG = Math.round(sampleG / count);
   sampleB = Math.round(sampleB / count);
 
+  const sampleLuma = 0.299 * sampleR + 0.587 * sampleG + 0.114 * sampleB;
+
   const mask = new Uint8Array(w * h);
   const visited = new Uint8Array(w * h);
   const queue = new Int32Array(w * h);
@@ -2053,8 +2167,8 @@ function computeBackgroundMask(data, w, h) {
     queue[qTail++] = x;
     visited[x] = 1;
   }
-  // Seed upper left and right borders (top 75% of image)
-  const maxBorderY = Math.floor(h * 0.75);
+  // Seed upper left and right borders (top 85% of image)
+  const maxBorderY = Math.floor(h * 0.85);
   for (let y = 1; y < maxBorderY; y++) {
     const idxL = y * w;
     const idxR = y * w + (w - 1);
@@ -2062,7 +2176,8 @@ function computeBackgroundMask(data, w, h) {
     queue[qTail++] = idxR; visited[idxR] = 1;
   }
 
-  const thresholdSq = 60 * 60;
+  const thresholdSq = tolerance * tolerance;
+  const featherThreshold = Math.max(10, tolerance * 0.75);
 
   while (qHead < qTail) {
     const pos = queue[qHead++];
@@ -2075,14 +2190,16 @@ function computeBackgroundMask(data, w, h) {
     const b = data[pIdx + 2];
 
     // Protection guards for foreground subject:
-    // 1. Skin tone detection (warm tones: R > G > B)
-    const isSkin = (r > 120 && g > 75 && b > 55 && (r - g) > 12 && (g - b) > 3 && (r - b) > 25);
-    // 2. Dark hair or dark clothing
-    const isDarkSubject = (r < 65 && g < 65 && b < 65);
-    // 3. Colored clothing (saturated non-neutral colors: red/green/blue shirt)
+    // 1. Skin tone detection (warm tones: R > G > B) in central face/neck area
+    const isSkin = (r > 95 && g > 55 && b > 35 && (r - g) > 10 && (r - b) > 18 && (px > w * 0.18 && px < w * 0.82) && (py > h * 0.12));
+    
+    // 2. Dark hair or dark clothing (ONLY if backdrop is light; on dark backgrounds, dark pixels are backdrop)
+    const isDarkSubject = (sampleLuma > 75) && (r < 60 && g < 60 && b < 60) && (px > w * 0.15 && px < w * 0.85) && (py > h * 0.15);
+    
+    // 3. Colored clothing (saturated non-neutral colors: red/green/blue shirt) in lower torso
     const maxC = Math.max(r, g, b);
     const minC = Math.min(r, g, b);
-    const isVibrantClothing = (maxC - minC > 50) && (py > h * 0.45);
+    const isVibrantClothing = (maxC - minC > 50) && (py > h * 0.45) && (px > w * 0.15 && px < w * 0.85);
 
     if (!isSkin && !isDarkSubject && !isVibrantClothing) {
       const dr = r - sampleR;
@@ -2092,11 +2209,10 @@ function computeBackgroundMask(data, w, h) {
 
       if (distSq < thresholdSq) {
         const dist = Math.sqrt(distSq);
-        const featherThreshold = 45;
         if (dist <= featherThreshold) {
           mask[pos] = 255;
         } else {
-          mask[pos] = Math.round(255 * (1 - (dist - featherThreshold) / 15));
+          mask[pos] = Math.round(255 * (1 - (dist - featherThreshold) / (tolerance - featherThreshold + 0.001)));
         }
 
         if (px > 0 && !visited[pos - 1]) { visited[pos - 1] = 1; queue[qTail++] = pos - 1; }

@@ -173,6 +173,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate {
         contentController.add(bridge, name: "nativeSavePDF")
         config.userContentController = contentController
         config.preferences.setValue(true, forKey: "developerExtrasEnabled")
+        config.preferences.setValue(true, forKey: "allowFileAccessFromFileURLs")
+        config.setValue(true, forKey: "allowUniversalAccessFromFileURLs")
 
         // Create main application window titled "Lemon"
         let frame = NSRect(x: 100, y: 100, width: 1240, height: 820)

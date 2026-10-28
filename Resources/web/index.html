@@ -439,9 +439,37 @@
               </select>
             </div>
 
-            <div id="customColorPickerRow" class="form-row flex-between" style="display: none;">
-              <label>Custom BG Color:</label>
-              <input type="color" id="pickerBgColor" value="#FFFFFF" style="width: 48px; height: 28px; padding: 0; cursor: pointer;">
+            <div id="customColorPickerRow" class="custom-color-studio" style="display: none;">
+              <div class="custom-color-header">
+                <label>Custom BG Color:</label>
+                <div class="color-inputs-wrap">
+                  <input type="color" id="pickerBgColor" value="#3B82F6" class="color-picker-input" title="Choose color from palette">
+                  <input type="text" id="txtCustomHex" value="#3B82F6" class="hex-text-input" maxlength="7" placeholder="#RRGGBB" title="Type or paste Hex color code">
+                </div>
+              </div>
+
+              <!-- Quick Visa & Studio Swatches -->
+              <div class="color-swatches-grid" title="Click any swatch to apply instantly">
+                <button type="button" class="swatch-btn" data-color="#FFFFFF" title="Pure White (#FFFFFF)" style="background-color: #FFFFFF;"></button>
+                <button type="button" class="swatch-btn" data-color="#D8E8F8" title="Visa Sky Blue (#D8E8F8)" style="background-color: #D8E8F8;"></button>
+                <button type="button" class="swatch-btn" data-color="#2563EB" title="Royal Blue (#2563EB)" style="background-color: #2563EB;"></button>
+                <button type="button" class="swatch-btn" data-color="#1E3A8A" title="Navy Blue (#1E3A8A)" style="background-color: #1E3A8A;"></button>
+                <button type="button" class="swatch-btn" data-color="#E5E7EB" title="Studio Grey (#E5E7EB)" style="background-color: #E5E7EB;"></button>
+                <button type="button" class="swatch-btn" data-color="#FAF8F5" title="Off-White (#FAF8F5)" style="background-color: #FAF8F5;"></button>
+                <button type="button" class="swatch-btn" data-color="#DC2626" title="Asian Visa Red (#DC2626)" style="background-color: #DC2626;"></button>
+                <button type="button" class="swatch-btn" data-color="#10B981" title="Studio Green (#10B981)" style="background-color: #10B981;"></button>
+                <button type="button" class="swatch-btn" data-color="#FEF3C7" title="Passport Cream (#FEF3C7)" style="background-color: #FEF3C7;"></button>
+                <button type="button" class="swatch-btn" data-color="#374151" title="Studio Dark Grey (#374151)" style="background-color: #374151;"></button>
+              </div>
+
+              <!-- Background Detection Sensitivity / Tolerance Slider -->
+              <div class="tolerance-row">
+                <div class="slider-header-mini">
+                  <span>Detection Sensitivity:</span>
+                  <span id="lblBgToleranceVal">Normal</span>
+                </div>
+                <input type="range" id="sliderBgTolerance" min="20" max="140" value="65" class="slider-mini" title="Adjust background color matching sensitivity">
+              </div>
             </div>
           </div>
 
