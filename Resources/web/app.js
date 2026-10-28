@@ -391,26 +391,31 @@ function setupEventListeners() {
     document.getElementById('standardNotes').textContent = preset.notes;
     document.getElementById('standardBgNote').textContent = `Background: ${preset.bg}`;
 
-    // Update dimensions of sheet items to match new standard
+    // Auto-adjust orientation if 5 photos in single row exceeds portrait width (e.g. US 2x2" on A4)
     const dim = getPassportDimensionsMM();
-    state.sheetItems.forEach(item => {
-      item.wMM = dim.w;
-      item.hMM = dim.h;
-    });
+    const paperMM = getPaperDimensionsMM();
+    if (state.targetCount === 5 && state.arrangement === 'singleRow' && (5 * dim.w > paperMM.w - 10)) {
+      if (state.paperSize === 'a4' && state.paperOrient === 'portrait') {
+        state.paperOrient = 'landscape';
+        document.querySelectorAll('input[name="paperOrient"]').forEach(r => {
+          r.checked = (r.value === 'landscape');
+        });
+      }
+    }
+
+    rebuildSheetGrid(state.sheetItems.length || 5, state.arrangement);
     updateUI();
   });
 
   document.getElementById('numCustomW').addEventListener('input', (e) => {
     state.customPassportW = parseFloat(e.target.value) || 35;
-    const dim = getPassportDimensionsMM();
-    state.sheetItems.forEach(item => { item.wMM = dim.w; });
+    rebuildSheetGrid(state.sheetItems.length || 5, state.arrangement);
     updateUI();
   });
 
   document.getElementById('numCustomH').addEventListener('input', (e) => {
     state.customPassportH = parseFloat(e.target.value) || 45;
-    const dim = getPassportDimensionsMM();
-    state.sheetItems.forEach(item => { item.hMM = dim.h; });
+    rebuildSheetGrid(state.sheetItems.length || 5, state.arrangement);
     updateUI();
   });
 
@@ -898,25 +903,93 @@ function rebuildSheetGrid(count, arrangement = state.arrangement) {
 }
 
 function calculateGridSlots(paperW_MM, paperH_MM, photoW_MM, photoH_MM, targetCount, arrangement) {
-  const margin = state.marginMM;
-  const gap = state.gapMM;
+  let target = targetCount === 'max' ? 30 : parseInt(targetCount, 10);
+  if (isNaN(target) || target < 1) target = 5;
 
-  const availW = paperW_MM - (margin * 2);
-  const availH = paperH_MM - (margin * 2);
+  const minGap = 2.0;
+  const minSideMargin = 4.0;
+  // Compute absolute maximum columns that can physically fit on the paper width
+  const maxColsPossible = Math.max(1, Math.floor((paperW_MM - (minSideMargin * 2) + minGap) / (photoW_MM + minGap)));
 
-  const maxCols = Math.max(1, Math.floor((availW + gap) / (photoW_MM + gap)));
-  const maxRows = Math.max(1, Math.floor((availH + gap) / (photoH_MM + gap)));
-
-  let target = targetCount === 'max' ? (maxCols * maxRows) : targetCount;
-  target = Math.max(1, target);
-
-  let cols = 1;
-  let rows = 1;
-
+  // 1. SINGLE ROW STRIP PRESET (e.g. 5 Photos in one row across top of A4)
   if (arrangement === 'singleRow') {
-    cols = Math.min(target, maxCols);
-    rows = Math.max(1, Math.ceil(target / cols));
-  } else if (arrangement === 'balanced') {
+    // If target fits across paper width (5 photos of 35mm on A4 210mm fits perfectly with 5mm gaps and 7.5mm margins!)
+    const cols = Math.min(target, maxColsPossible);
+    const rows = Math.max(1, Math.ceil(target / cols));
+
+    const remainingW = paperW_MM - (cols * photoW_MM);
+    const numGaps = Math.max(1, cols - 1);
+    let gapX = 5.0; // Standard 5mm gap between photos
+    if (numGaps * gapX > remainingW - (minSideMargin * 2)) {
+      gapX = Math.max(minGap, (remainingW - (minSideMargin * 2)) / numGaps);
+    }
+    const totalGapsW = numGaps * gapX;
+    const sideMargin = Math.round(((remainingW - totalGapsW) / 2) * 100) / 100;
+
+    const gapY = 5.0;
+    const startY = state.alignment === 'centered'
+      ? Math.max(10, (paperH_MM - ((rows * photoH_MM) + ((rows - 1) * gapY))) / 2)
+      : Math.max(6, state.marginMM || 10);
+
+    const slots = [];
+    let count = 0;
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        if (count >= target) break;
+        const x = sideMargin + (c * (photoW_MM + gapX));
+        const y = startY + (r * (photoH_MM + gapY));
+        slots.push({
+          x: Math.round(x * 100) / 100,
+          y: Math.round(y * 100) / 100,
+          w: photoW_MM,
+          h: photoH_MM
+        });
+        count++;
+      }
+    }
+    return slots;
+  }
+
+  // 2. BALANCED GRID PRESET (e.g. 5 Photos in 3+2 Centered Pyramid)
+  if (arrangement === 'balanced') {
+    if (target === 5) {
+      // Row 1: 3 photos centered horizontally
+      // Row 2: 2 photos centered horizontally directly below Row 1
+      const gapX = 5.0;
+      const gapY = 5.0;
+      const row1W = (3 * photoW_MM) + (2 * gapX);
+      const row2W = (2 * photoW_MM) + (1 * gapX);
+      const totalH = (2 * photoH_MM) + gapY;
+
+      const startY = state.alignment === 'topCenter' ? Math.max(6, state.marginMM || 10) : Math.max(10, (paperH_MM - totalH) / 2);
+      const startX1 = (paperW_MM - row1W) / 2;
+      const startX2 = (paperW_MM - row2W) / 2;
+
+      const slots = [];
+      // Row 1 (3 photos)
+      for (let c = 0; c < 3; c++) {
+        slots.push({
+          x: Math.round((startX1 + c * (photoW_MM + gapX)) * 100) / 100,
+          y: Math.round(startY * 100) / 100,
+          w: photoW_MM,
+          h: photoH_MM
+        });
+      }
+      // Row 2 (2 photos centered directly under the 3 above)
+      for (let c = 0; c < 2; c++) {
+        slots.push({
+          x: Math.round((startX2 + c * (photoW_MM + gapX)) * 100) / 100,
+          y: Math.round((startY + photoH_MM + gapY) * 100) / 100,
+          w: photoW_MM,
+          h: photoH_MM
+        });
+      }
+      return slots;
+    }
+
+    // Other counts in balanced mode
+    let cols = 1;
+    let rows = 1;
     if (target <= 2) {
       cols = target; rows = 1;
     } else if (target <= 4) {
@@ -926,42 +999,68 @@ function calculateGridSlots(paperW_MM, paperH_MM, photoW_MM, photoH_MM, targetCo
     } else if (target <= 8) {
       cols = 4; rows = 2;
     } else {
-      cols = Math.min(target, maxCols);
-      rows = Math.min(Math.ceil(target / cols), maxRows);
+      cols = Math.min(target, maxColsPossible);
+      rows = Math.ceil(target / cols);
     }
-  } else if (arrangement === 'customGrid') {
-    cols = Math.min(state.customCols, maxCols);
-    rows = Math.min(state.customRows, maxRows);
-    target = cols * rows;
+
+    const gapX = 5.0;
+    const gapY = 5.0;
+    const gridW = (cols * photoW_MM) + ((cols - 1) * gapX);
+    const gridH = (rows * photoH_MM) + ((rows - 1) * gapY);
+
+    const startX = Math.max(minSideMargin, (paperW_MM - gridW) / 2);
+    const startY = state.alignment === 'topCenter' ? Math.max(6, state.marginMM || 10) : Math.max(10, (paperH_MM - gridH) / 2);
+
+    const slots = [];
+    let count = 0;
+    for (let r = 0; r < rows; r++) {
+      const remainingItems = target - count;
+      const itemsInThisRow = Math.min(cols, remainingItems);
+      // Center incomplete last row
+      const thisRowW = (itemsInThisRow * photoW_MM) + ((itemsInThisRow - 1) * gapX);
+      const thisRowStartX = (paperW_MM - thisRowW) / 2;
+
+      for (let c = 0; c < itemsInThisRow; c++) {
+        const x = thisRowStartX + (c * (photoW_MM + gapX));
+        const y = startY + (r * (photoH_MM + gapY));
+        slots.push({
+          x: Math.round(x * 100) / 100,
+          y: Math.round(y * 100) / 100,
+          w: photoW_MM,
+          h: photoH_MM
+        });
+        count++;
+      }
+    }
+    return slots;
   }
 
-  const gridW_MM = (cols * photoW_MM) + ((cols - 1) * gap);
-  const gridH_MM = (rows * photoH_MM) + ((rows - 1) * gap);
-
-  let startX_MM = margin;
-  let startY_MM = margin;
-
-  if (state.alignment === 'centered') {
-    startX_MM = Math.max(margin, (paperW_MM - gridW_MM) / 2);
-    startY_MM = Math.max(margin, (paperH_MM - gridH_MM) / 2);
-  } else if (state.alignment === 'topCenter') {
-    startX_MM = Math.max(margin, (paperW_MM - gridW_MM) / 2);
-    startY_MM = margin;
-  }
+  // 3. CUSTOM GRID PRESET (user specified cols & rows)
+  const cols = Math.min(state.customCols || 5, maxColsPossible);
+  const rows = Math.max(1, state.customRows || 1);
+  const gapX = 5.0;
+  const gapY = 5.0;
+  const gridW = (cols * photoW_MM) + ((cols - 1) * gapX);
+  const gridH = (rows * photoH_MM) + ((rows - 1) * gapY);
+  const startX = Math.max(minSideMargin, (paperW_MM - gridW) / 2);
+  const startY = state.alignment === 'topCenter' ? Math.max(6, state.marginMM || 10) : Math.max(10, (paperH_MM - gridH) / 2);
 
   const slots = [];
   let count = 0;
-
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       if (count >= target) break;
-      const x = startX_MM + (c * (photoW_MM + gap));
-      const y = startY_MM + (r * (photoH_MM + gap));
-      slots.push({ x, y, w: photoW_MM, h: photoH_MM });
+      const x = startX + (c * (photoW_MM + gapX));
+      const y = startY + (r * (photoH_MM + gapY));
+      slots.push({
+        x: Math.round(x * 100) / 100,
+        y: Math.round(y * 100) / 100,
+        w: photoW_MM,
+        h: photoH_MM
+      });
       count++;
     }
   }
-
   return slots;
 }
 
