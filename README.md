@@ -23,7 +23,10 @@ Get the official, notarized-ready disk image directly from GitHub Releases:
 
 ## ✨ Key Features
 
-### 🖨️ Direct 1:1 Physical Millimeter Printing
+### 🖨️ Direct 1:1 Millimeter Printing & Glossy Photo Paper
+* **🌟 Glossy Photo Paper Optimization**: Native CUPS and AppKit media configuration for **Canon G3010 / G3000 series**, Epson, and HP inkjet printers (`CNIJMediaType 68` / `50` / `PhotographicGlossy`) for rich photo blacks, vivid colors, and no ink smudging.
+* **Paper Finish Options**: Glossy Photo Paper (Recommended), Photo Paper Plus Semi-Gloss / Luster, Matte Photo Paper, and Plain Paper.
+* **High Photo Quality (300+ DPI)**: Hardware Super Fine setting (`CNIJPrintQuality 0` / `5`) with smooth gradients and no printhead banding.
 * **Zero Scaling Distortion**: Directly communicates with macOS native `NSPrintOperation` with a strict `scalingFactor = 1.0` and zero margin offsets.
 * **Exact Millimeter Sizing**:
   * **35 × 45 mm** — UK, Schengen, European Union, India, Australia, Singapore, New Zealand
@@ -31,14 +34,17 @@ Get the official, notarized-ready disk image directly from GitHub Releases:
   * **33 × 48 mm** — China Visa standard
   * **35 × 35 mm** — Japan / India standard
   * **Custom mm** — Any physical width and height you specify.
-* **Direct Print (`⌘P`)**: Opens the native macOS print sheet.
+* **Direct Print (`⌘P`)**: Opens the native macOS print sheet with full driver options exposed (Media & Quality, Paper Handling, Preview).
 * **Quick Print (`⌘⇧P`)**: Sends directly to your default photo printer with one click.
 * **Built-in Physical Scale Ruler**: A 50 mm calibration bar printed at the margin to verify ruler precision.
 
 ---
 
 ### 📄 "5 Photos on A4" Sheet Layouts (Save Paper!)
-* **Top Strip (1 Row of 5)**: Formats 5 passport photos in a single row across the top of an A4 sheet. This leaves 80% of the photo paper sheet clean and intact so you can reinsert the paper to print future customer orders.
+* **Top Strip (1 Row of 5)**: Formats all 5 passport photos in a single horizontal row across the top of an A4 sheet:
+  * Exact **35.0 × 45.0 mm** per photo.
+  * Symmetrical **7.5 mm** side margins and **5.0 mm** inter-photo gaps ($7.5 + 5\times 35 + 4\times 5 + 7.5 = 210\text{ mm}$).
+  * **Saves 82% of A4 Photo Paper**: Photos occupy only the top 55 mm ($Y = 10\text{ to }55\text{ mm}$), leaving the remaining 242 mm clean and unprinted for future customer orders.
 * **Balanced Grid (3 + 2 Centered)**: Formats 5 photos in two centered rows.
 * **Fill Sheet**: Automatically calculates and fills the entire page with maximum possible photos (up to 20–30 per page).
 
@@ -92,7 +98,7 @@ Get the official, notarized-ready disk image directly from GitHub Releases:
   * 🔘 **Light Grey (`#F0F0F0`)** — European ID card neutral backdrop
   * ⚪ **Off-White (`#FAF8F5`)** — Standard visa backdrop
   * 🔴 **Red (`#DC2626`)** — Asian official visa format (China, Indonesia)
-  * 🎨 **Custom Color** — Any hex color via macOS color picker
+  * 🎨 **Custom Color Studio**: Exact hex code input (`#RRGGBB`), native macOS color picker, and 10 one-click studio swatches (Pure White, Sky Blue, Royal Blue, Navy, Studio Grey, Off-White, Visa Red, Studio Green, Passport Cream, Dark Grey) with 100% accurate color reproduction.
 
 ---
 
