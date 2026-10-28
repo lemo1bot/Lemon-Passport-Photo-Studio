@@ -88,6 +88,8 @@ class BridgeHandler: NSObject, WKScriptMessageHandler {
             let heightPoints = dict["paperHeightPoints"] as? Double ?? 841.89
             let orientationStr = dict["orientation"] as? String ?? "portrait"
             let isQuick = (message.name == "nativeQuickPrint")
+            let paperType = dict["paperType"] as? String ?? "glossy"
+            let printQuality = dict["printQuality"] as? String ?? "high"
 
             DispatchQueue.main.async { [weak self] in
                 guard let self = self else { return }
@@ -102,10 +104,51 @@ class BridgeHandler: NSObject, WKScriptMessageHandler {
                 printInfo.isVerticallyCentered = true
                 printInfo.scalingFactor = 1.0 // 100% exact physical millimeter scale!
 
+                // Configure Canon CUPS PPD & generic media type attributes
+                let printDict = printInfo.dictionary()
+                var cnijMedia = "68" // Glossy Photo Paper
+                var mediaTypeGeneric = "PhotographicGlossy"
+
+                switch paperType {
+                case "semiGloss":
+                    cnijMedia = "42" // Photo Paper Plus Semi-gloss
+                    mediaTypeGeneric = "PhotographicSemiGloss"
+                case "matte":
+                    cnijMedia = "28" // Matte Photo Paper
+                    mediaTypeGeneric = "PhotographicMatte"
+                case "plain":
+                    cnijMedia = "0"  // Plain Paper
+                    mediaTypeGeneric = "Stationery"
+                default: // "glossy"
+                    cnijMedia = "68" // Glossy Photo Paper
+                    mediaTypeGeneric = "PhotographicGlossy"
+                }
+
+                let cnijQuality = (printQuality == "high") ? "0" : "10" // 0 = Super Fine, 10 = Normal
+
+                printDict[NSPrintInfo.AttributeKey("CNIJMediaType")] = cnijMedia
+                printDict[NSPrintInfo.AttributeKey("CNIJPrintQuality")] = cnijQuality
+                printDict[NSPrintInfo.AttributeKey("MediaType")] = mediaTypeGeneric
+                printDict[NSPrintInfo.AttributeKey("cups-MediaType")] = mediaTypeGeneric
+                printDict[NSPrintInfo.AttributeKey("cups-CNIJMediaType")] = cnijMedia
+                printDict[NSPrintInfo.AttributeKey("cups-CNIJPrintQuality")] = cnijQuality
+
                 let printView = DirectPrintSheetView(image: image, frame: NSRect(origin: .zero, size: printInfo.paperSize))
                 let printOp = NSPrintOperation(view: printView, printInfo: printInfo)
                 printOp.showsPrintPanel = !isQuick
                 printOp.showsProgressPanel = true
+
+                if !isQuick {
+                    printOp.printPanel.options = [
+                        .showsCopies,
+                        .showsPageRange,
+                        .showsPaperSize,
+                        .showsOrientation,
+                        .showsScaling,
+                        .showsPreview,
+                        .showsPrintSelection
+                    ]
+                }
 
                 if let win = self.window, !isQuick {
                     printOp.runModal(for: win, delegate: nil, didRun: nil, contextInfo: nil)

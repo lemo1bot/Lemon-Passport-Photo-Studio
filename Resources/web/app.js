@@ -52,6 +52,8 @@ const state = {
   // Sheet Layout Settings (Default: 5 photos on A4!)
   paperSize: 'a4',
   paperOrient: 'portrait',
+  paperType: 'glossy', // Default: Glossy Photo Paper
+  printQuality: 'high', // Default: High Photo Quality (300+ DPI)
   targetCount: 5,
   arrangement: 'singleRow',
   customCols: 5,
@@ -329,6 +331,27 @@ function setupEventListeners() {
     r.addEventListener('change', (e) => {
       state.paperOrient = e.target.value;
       rebuildSheetGrid(state.sheetItems.length || 5);
+      updateUI();
+    });
+  });
+
+  // Paper Type & Finish (Glossy Photo Paper for Passports)
+  const selPaperType = document.getElementById('selPaperType');
+  if (selPaperType) {
+    selPaperType.addEventListener('change', (e) => {
+      state.paperType = e.target.value;
+      updateUI();
+    });
+  }
+
+  // Print Quality (High vs Standard)
+  document.querySelectorAll('input[name="printQuality"]').forEach(r => {
+    r.addEventListener('change', (e) => {
+      state.printQuality = e.target.value;
+      const lblBadge = document.getElementById('lblPrintQualityBadge');
+      if (lblBadge) {
+        lblBadge.textContent = state.printQuality === 'high' ? 'High (300+ DPI)' : 'Standard';
+      }
       updateUI();
     });
   });
@@ -1859,6 +1882,15 @@ function updateCountChips() {
 function syncControls() {
   document.getElementById('selPaperSize').value = state.paperSize;
   document.querySelector(`input[name="paperOrient"][value="${state.paperOrient}"]`).checked = true;
+  if (document.getElementById('selPaperType')) {
+    document.getElementById('selPaperType').value = state.paperType || 'glossy';
+  }
+  const qualityRadio = document.querySelector(`input[name="printQuality"][value="${state.printQuality || 'high'}"]`);
+  if (qualityRadio) qualityRadio.checked = true;
+  const lblBadge = document.getElementById('lblPrintQualityBadge');
+  if (lblBadge) {
+    lblBadge.textContent = (state.printQuality || 'high') === 'high' ? 'High (300+ DPI)' : 'Standard';
+  }
   document.getElementById('selArrangement').value = state.arrangement;
   document.getElementById('selAlignment').value = state.alignment;
   document.getElementById('sliderMargin').value = state.marginMM;
@@ -1964,6 +1996,17 @@ function updateUI() {
   document.getElementById('footerPaperLabel').textContent = `${paperPreset.name.split(' ')[0]} (${state.paperOrient})`;
   document.getElementById('footerPhotoLabel').textContent = `${dim.w} × ${dim.h} mm`;
   document.getElementById('footerSlotsLabel').textContent = `${state.sheetItems.length} Photos`;
+
+  const mediaNames = {
+    glossy: 'Glossy Photo Paper',
+    semiGloss: 'Semi-Gloss / Luster',
+    matte: 'Matte Photo Paper',
+    plain: 'Plain Paper'
+  };
+  const footerMedia = document.getElementById('footerMediaLabel');
+  if (footerMedia) {
+    footerMedia.textContent = mediaNames[state.paperType || 'glossy'] || 'Glossy Photo Paper';
+  }
 
   renderCrop();
   renderSheet();
@@ -2766,7 +2809,8 @@ function generateSheet300DPICanvas() {
     ctx.fillStyle = '#64748B';
     ctx.font = '6.5px -apple-system, sans-serif';
     const marginPt = state.marginMM * pointsPerMM;
-    const infoText = `Lemon Photo Studio • ${Math.round(photoMM.w)}×${Math.round(photoMM.h)} mm • ${state.sheetItems.length} Photos on ${PAPER_PRESETS[state.paperSize].name.split(' ')[0]} • Print at 100% (No Scaling)`;
+    const mediaName = state.paperType === 'glossy' ? 'Glossy Photo' : (state.paperType === 'semiGloss' ? 'Semi-Gloss' : (state.paperType === 'matte' ? 'Matte' : 'Plain'));
+    const infoText = `Lemon Photo Studio • ${Math.round(photoMM.w)}×${Math.round(photoMM.h)} mm • ${state.sheetItems.length} Photos on ${PAPER_PRESETS[state.paperSize].name.split(' ')[0]} (${mediaName}) • Print at 100% (No Scaling)`;
     ctx.fillText(infoText, marginPt, 14);
     ctx.restore();
   }
@@ -2790,7 +2834,9 @@ function handleDirectPrint() {
       dataURL: dataURL,
       paperWidthPoints: paperWidthPoints,
       paperHeightPoints: paperHeightPoints,
-      orientation: state.paperOrient
+      orientation: state.paperOrient,
+      paperType: state.paperType || 'glossy',
+      printQuality: state.printQuality || 'high'
     });
   } else {
     window.print();
@@ -2808,7 +2854,9 @@ function handleQuickPrint() {
       dataURL: dataURL,
       paperWidthPoints: paperWidthPoints,
       paperHeightPoints: paperHeightPoints,
-      orientation: state.paperOrient
+      orientation: state.paperOrient,
+      paperType: state.paperType || 'glossy',
+      printQuality: state.printQuality || 'high'
     });
   } else {
     window.print();

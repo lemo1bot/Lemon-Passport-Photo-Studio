@@ -218,6 +218,9 @@
               <span>📄 Paper:</span> <b id="footerPaperLabel">A4 (Portrait)</b>
             </div>
             <div class="sheet-status-item">
+              <span>🌟 Media:</span> <b id="footerMediaLabel">Glossy Photo Paper</b>
+            </div>
+            <div class="sheet-status-item">
               <span>📐 Photo:</span> <b id="footerPhotoLabel">35 × 45 mm</b>
             </div>
             <div class="sheet-status-item">
@@ -572,6 +575,46 @@
                   <input type="radio" name="paperOrient" value="landscape">
                   <span>Landscape</span>
                 </label>
+              </div>
+            </div>
+
+            <!-- Paper Finish / Media Type (Glossy Photo Paper for Passports) -->
+            <div class="form-row">
+              <div class="flex-between">
+                <label>Paper Type & Finish:</label>
+                <span class="badge-accent">Photo Paper</span>
+              </div>
+              <select id="selPaperType">
+                <option value="glossy" selected>🌟 Glossy Photo Paper (Recommended)</option>
+                <option value="semiGloss">✨ Photo Paper Plus Semi-Gloss / Luster</option>
+                <option value="matte">📄 Matte Photo Paper</option>
+                <option value="plain">📑 Plain Paper (Draft / Test Print)</option>
+              </select>
+            </div>
+
+            <!-- Print Quality -->
+            <div class="form-row">
+              <div class="flex-between">
+                <label>Print Quality:</label>
+                <span id="lblPrintQualityBadge" class="badge-accent">High (300+ DPI)</span>
+              </div>
+              <div class="radio-pill-group">
+                <label class="radio-pill">
+                  <input type="radio" name="printQuality" value="high" checked>
+                  <span>High Photo Quality</span>
+                </label>
+                <label class="radio-pill">
+                  <input type="radio" name="printQuality" value="standard">
+                  <span>Standard</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="paper-finish-tip">
+              <div class="tip-icon">🌟</div>
+              <div class="tip-content">
+                <strong>Glossy Photo Paper Mode</strong>
+                <p>Configured for Canon (G3000/G3010), Epson, and HP inkjet printers with rich photo blacks, vivid colors, and high-DPI rasterization.</p>
               </div>
             </div>
 

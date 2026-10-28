@@ -966,6 +966,43 @@ select:focus, input:focus {
   color: var(--accent);
 }
 
+.paper-finish-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(245, 158, 11, 0.08));
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+  margin-top: 4px;
+}
+
+.paper-finish-tip .tip-icon {
+  font-size: 16px;
+  line-height: 1.2;
+  flex-shrink: 0;
+}
+
+.paper-finish-tip .tip-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.paper-finish-tip .tip-content strong {
+  font-size: 11.5px;
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+.paper-finish-tip .tip-content p {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  line-height: 1.35;
+  margin: 0;
+}
+
 .quick-count-row {
   display: flex;
   gap: 4px;
