@@ -113,6 +113,18 @@ body {
   letter-spacing: -0.2px;
 }
 
+.badge-version {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2.5px 7px;
+  background: linear-gradient(135deg, #2563EB, #1D4ED8);
+  color: #FFFFFF;
+  border-radius: 12px;
+  letter-spacing: 0.5px;
+  line-height: 1;
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.35);
+}
+
 .quick-presets {
   display: flex;
   align-items: center;

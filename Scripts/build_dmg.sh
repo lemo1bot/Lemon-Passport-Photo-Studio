@@ -49,9 +49,9 @@ cat << EOF > "${APP_BUNDLE}/Contents/Info.plist"
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.0.0</string>
+    <string>1.1.0</string>
     <key>CFBundleVersion</key>
-    <string>1</string>
+    <string>2</string>
     <key>LSMinimumSystemVersion</key>
     <string>13.0</string>
     <key>NSHighResolutionCapable</key>
@@ -126,6 +126,18 @@ echo "-> Setting custom Finder file icon on ${DMG_NAME}..."
 swift -e '
 import AppKit
 let dmg = "'"${DMG_PATH}"'"
+let icns = "'"${PROJECT_DIR}"'/Resources/AppIcon.icns"
+if let img = NSImage(contentsOfFile: icns) {
+    _ = NSWorkspace.shared.setIcon(img, forFile: dmg, options: [])
+}
+'
+
+# Create versioned copy Lemon-v1.1.0.dmg
+echo "-> Creating versioned copy Lemon-v1.1.0.dmg..."
+cp -p "${DMG_PATH}" "${PROJECT_DIR}/Lemon-v1.1.0.dmg"
+swift -e '
+import AppKit
+let dmg = "'"${PROJECT_DIR}"'/Lemon-v1.1.0.dmg"
 let icns = "'"${PROJECT_DIR}"'/Resources/AppIcon.icns"
 if let img = NSImage(contentsOfFile: icns) {
     _ = NSWorkspace.shared.setIcon(img, forFile: dmg, options: [])

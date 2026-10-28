@@ -10,12 +10,13 @@
 
 ## 📥 Download & Install
 
-Get the official, notarized-ready disk image directly from GitHub Releases:
+Get the official disk image directly from GitHub Releases:
 
-👉 **[Download Lemon.dmg (Latest Release)](https://github.com/lemo1bot/Lemon-Passport-Photo-Studio/releases/latest/download/Lemon.dmg)**
+* 👉 **[Download Lemon-v1.1.0.dmg (Versioned)](https://github.com/lemo1bot/Lemon-Passport-Photo-Studio/releases/download/v1.1.0/Lemon-v1.1.0.dmg)** *(Recommended)*
+* 👉 **[Download Lemon.dmg](https://github.com/lemo1bot/Lemon-Passport-Photo-Studio/releases/download/v1.1.0/Lemon.dmg)** *(Latest)*
 
 ### Quick Installation:
-1. Open **`Lemon.dmg`**.
+1. Open **`Lemon-v1.1.0.dmg`** (or **`Lemon.dmg`**).
 2. Drag **`Lemon.app`** into the **Applications** folder shortcut.
 3. Launch **Lemon** from Launchpad, Spotlight, or the Applications folder!
 
