@@ -162,6 +162,17 @@ body {
   background-color: #FDE68A;
 }
 
+.preset-pill.highlight-blue {
+  background-color: #EFF6FF;
+  border-color: #3B82F6;
+  color: #1D4ED8;
+  font-weight: 600;
+}
+
+.preset-pill.highlight-blue:hover {
+  background-color: #DBEAFE;
+}
+
 .star {
   color: #F59E0B;
 }
@@ -1278,6 +1289,94 @@ input[type="range"] {
 .float-btn.float-delete:hover {
   background-color: #DC2626;
   color: #FFFFFF;
+}
+
+.float-dim-badge {
+  color: #94A3B8;
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 4px 6px;
+  display: flex;
+  align-items: center;
+  border-right: 1px solid #334155;
+  margin-right: 2px;
+}
+
+/* Selected Photo Resize Controls */
+.quick-size-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.btn-size-chip {
+  padding: 6px 8px;
+  font-size: 11px;
+  font-weight: 500;
+  background-color: var(--bg-app);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-main);
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+}
+
+.btn-size-chip:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background-color: var(--accent-light);
+}
+
+.btn-size-chip.highlight-chip {
+  background-color: #EFF6FF;
+  border-color: #3B82F6;
+  color: #1D4ED8;
+  font-weight: 600;
+}
+
+.btn-size-chip.highlight-chip:hover {
+  background-color: #DBEAFE;
+}
+
+.input-unit-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-unit-wrapper input {
+  padding-right: 30px;
+}
+
+.unit-tag {
+  position: absolute;
+  right: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.resize-tip {
+  margin-top: 8px;
+  padding: 7px 10px;
+  font-size: 10.5px;
+  line-height: 1.35;
+  background-color: var(--bg-app);
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+}
+
+.btn-xs {
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 4px;
+  line-height: 1.2;
+  cursor: pointer;
 }
 
 /* Camera Modal */

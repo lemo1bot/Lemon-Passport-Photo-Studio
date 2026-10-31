@@ -49,6 +49,14 @@ const state = {
   marqueeCurrentPtY: 0,
   snapToGrid: true,
 
+  // Interactive Resizing of Sheet Photo Items
+  isResizingSheetItem: false,
+  resizeHandle: null, // 'tl', 'tr', 'bl', 'br', 't', 'r', 'b', 'l'
+  resizeStartMouseX: 0,
+  resizeStartMouseY: 0,
+  resizeStartItem: null,
+  lockSheetItemAspect: true,
+
   // Sheet Layout Settings (Default: 5 photos on A4!)
   paperSize: 'a4',
   paperOrient: 'portrait',
@@ -56,6 +64,7 @@ const state = {
   printQuality: 'high', // Default: High Photo Quality (300+ DPI)
   targetCount: 5,
   arrangement: 'singleRow',
+  fullPageMode: 'fit', // 'fit' (proportional, preserve aspect), 'margins' (with margins), 'borderless' (full 210x297mm)
   customCols: 5,
   customRows: 1,
   alignment: 'topCenter',
@@ -237,6 +246,16 @@ function setupEventListeners() {
     switchTab('sheet');
   });
 
+  // Quick 1 Photo Full A4 Preset
+  const btnQuickFullA4 = document.getElementById('btnQuickFullA4');
+  if (btnQuickFullA4) {
+    btnQuickFullA4.addEventListener('click', applyQuickFullA4);
+  }
+  const btnToolbarFullA4 = document.getElementById('btnToolbarFullA4');
+  if (btnToolbarFullA4) {
+    btnToolbarFullA4.addEventListener('click', applyQuickFullA4);
+  }
+
   // Freeform Sheet Controls (Move, Multi-Select, Copy Together, Add Photo)
   document.getElementById('btnSelectAllSheet').addEventListener('click', selectAllSheetItems);
   document.getElementById('btnDuplicateSheetItem').addEventListener('click', duplicateSelectedSheetItems);
@@ -253,6 +272,11 @@ function setupEventListeners() {
   });
 
   // Floating Menu Actions over Selected Sheet Photo(s)
+  const btnFloatFullA4 = document.getElementById('btnFloatFullA4');
+  if (btnFloatFullA4) {
+    btnFloatFullA4.addEventListener('click', () => makeSelectedPhotoFullA4('fit'));
+  }
+
   document.getElementById('btnFloatEdit').addEventListener('click', () => {
     const selIdx = state.selectedSheetItemIndices[0] ?? state.selectedSheetItemIdx;
     const sel = state.sheetItems[selIdx];
@@ -262,6 +286,88 @@ function setupEventListeners() {
 
   document.getElementById('btnFloatCopy').addEventListener('click', duplicateSelectedSheetItems);
   document.getElementById('btnFloatDelete').addEventListener('click', deleteSelectedSheetItems);
+
+  // Inspector: Selected Photo Resizing (Resize Any Photo by Self!)
+  const numSelW = document.getElementById('numSelectedPhotoW');
+  const numSelH = document.getElementById('numSelectedPhotoH');
+  const chkLockAspect = document.getElementById('chkLockAspectResize');
+  const btnMakeFullA4 = document.getElementById('btnMakeSelectedFullA4');
+  const btnResetSize = document.getElementById('btnResetSelectedPhotoSize');
+
+  if (chkLockAspect) {
+    chkLockAspect.addEventListener('change', (e) => {
+      state.lockSheetItemAspect = e.target.checked;
+    });
+  }
+
+  if (btnMakeFullA4) {
+    btnMakeFullA4.addEventListener('click', () => makeSelectedPhotoFullA4('margins'));
+  }
+
+  if (btnResetSize) {
+    btnResetSize.addEventListener('click', resetSelectedPhotoSize);
+  }
+
+  if (numSelW) {
+    numSelW.addEventListener('input', (e) => {
+      const item = state.sheetItems[state.selectedSheetItemIdx];
+      if (!item) return;
+      const val = parseFloat(e.target.value);
+      if (isNaN(val) || val < 5) return;
+      const oldW = item.wMM;
+      item.wMM = val;
+      if (state.lockSheetItemAspect && oldW > 0) {
+        const aspect = oldW / item.hMM;
+        item.hMM = Math.round((val / aspect) * 10) / 10;
+        if (numSelH) numSelH.value = item.hMM;
+      }
+      const paperMM = getPaperDimensionsMM();
+      item.xMM = Math.max(0, Math.min(paperMM.w - item.wMM, item.xMM));
+      item.yMM = Math.max(0, Math.min(paperMM.h - item.hMM, item.yMM));
+      renderSheet();
+      updateFloatingMenu();
+    });
+  }
+
+  if (numSelH) {
+    numSelH.addEventListener('input', (e) => {
+      const item = state.sheetItems[state.selectedSheetItemIdx];
+      if (!item) return;
+      const val = parseFloat(e.target.value);
+      if (isNaN(val) || val < 5) return;
+      const oldH = item.hMM;
+      item.hMM = val;
+      if (state.lockSheetItemAspect && oldH > 0) {
+        const aspect = item.wMM / oldH;
+        item.wMM = Math.round((val * aspect) * 10) / 10;
+        if (numSelW) numSelW.value = item.wMM;
+      }
+      const paperMM = getPaperDimensionsMM();
+      item.xMM = Math.max(0, Math.min(paperMM.w - item.wMM, item.xMM));
+      item.yMM = Math.max(0, Math.min(paperMM.h - item.hMM, item.yMM));
+      renderSheet();
+      updateFloatingMenu();
+    });
+  }
+
+  document.querySelectorAll('.btn-size-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const action = chip.getAttribute('data-action');
+      if (action === 'fullA4') {
+        makeSelectedPhotoFullA4('margins');
+      } else if (action === 'fitA4') {
+        makeSelectedPhotoFullA4('fit');
+      } else if (action === 'resetStandard') {
+        resetSelectedPhotoSize();
+      } else {
+        const w = parseFloat(chip.getAttribute('data-w'));
+        const h = parseFloat(chip.getAttribute('data-h'));
+        if (!isNaN(w) && !isNaN(h)) {
+          resizeSelectedPhoto(w, h);
+        }
+      }
+    });
+  });
 
   // Copy / Duplicate in Editor & Sidebar
   document.getElementById('btnDuplicateInEditor').addEventListener('click', () => {
@@ -370,9 +476,24 @@ function setupEventListeners() {
   document.getElementById('selArrangement').addEventListener('change', (e) => {
     state.arrangement = e.target.value;
     document.getElementById('customGridRow').style.display = state.arrangement === 'customGrid' ? 'flex' : 'none';
+    const fullPageRow = document.getElementById('fullPageOptionsRow');
+    if (fullPageRow) fullPageRow.style.display = state.arrangement === 'fullPage' ? 'flex' : 'none';
+    if (state.arrangement === 'fullPage') {
+      state.targetCount = 1;
+      updateCountChips();
+    }
     rebuildSheetGrid(state.targetCount, state.arrangement);
     updateUI();
   });
+
+  const selFullPageMode = document.getElementById('selFullPageMode');
+  if (selFullPageMode) {
+    selFullPageMode.addEventListener('change', (e) => {
+      state.fullPageMode = e.target.value;
+      rebuildSheetGrid(state.targetCount, 'fullPage');
+      updateUI();
+    });
+  }
 
   document.getElementById('numCols').addEventListener('input', (e) => {
     state.customCols = parseInt(e.target.value, 10) || 1;
@@ -716,7 +837,7 @@ function setupEventListeners() {
       photo.panY = state.photoStartPanY + (e.clientY - state.cropDragStartY);
       renderCrop();
       renderSheet();
-    } else if (state.isDraggingSheetItem || state.isMarqueeSelecting) {
+    } else if (state.isDraggingSheetItem || state.isResizingSheetItem || state.isMarqueeSelecting) {
       handleSheetItemDragMove(e);
     }
   });
@@ -725,6 +846,14 @@ function setupEventListeners() {
     if (state.isDraggingCrop) {
       state.isDraggingCrop = false;
       saveSnapshot();
+    }
+    if (state.isResizingSheetItem) {
+      state.isResizingSheetItem = false;
+      state.resizeHandle = null;
+      state.resizeStartItem = null;
+      renderSheet();
+      updateFloatingMenu();
+      syncSelectedPhotoInputs();
     }
     if (state.isDraggingSheetItem) {
       state.isDraggingSheetItem = false;
@@ -758,9 +887,40 @@ function setupEventListeners() {
     renderSheet();
   }, { passive: false });
 
-  // Interactive Freeform Sheet Drag & Drop Handlers
+  // Interactive Freeform Sheet Drag, Drop & Resize Handlers
   const sheetCanvas = document.getElementById('sheetCanvas');
   sheetCanvas.addEventListener('mousedown', handleSheetCanvasMouseDown);
+  sheetCanvas.addEventListener('mousemove', (e) => {
+    if (state.isDraggingSheetItem || state.isResizingSheetItem || state.isMarqueeSelecting) return;
+    const rect = sheetCanvas.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    if (state.selectedSheetItemIdx >= 0 && state.sheetItems[state.selectedSheetItemIdx]) {
+      const hitHandle = getSheetItemHandleAt(state.sheetItems[state.selectedSheetItemIdx], mouseX, mouseY);
+      if (hitHandle) {
+        sheetCanvas.style.cursor = getCursorForHandle(hitHandle);
+        return;
+      }
+    }
+
+    const pointsPerMM = 72 / 25.4;
+    const displayScale = getEffectiveSheetScale();
+    let overItem = false;
+    for (let i = state.sheetItems.length - 1; i >= 0; i--) {
+      const it = state.sheetItems[i];
+      const ix = it.xMM * pointsPerMM * displayScale;
+      const iy = it.yMM * pointsPerMM * displayScale;
+      const iw = it.wMM * pointsPerMM * displayScale;
+      const ih = it.hMM * pointsPerMM * displayScale;
+      if (mouseX >= ix && mouseX <= ix + iw && mouseY >= iy && mouseY <= iy + ih) {
+        overItem = true;
+        break;
+      }
+    }
+    sheetCanvas.style.cursor = overItem ? 'grab' : 'default';
+  });
+
   sheetCanvas.addEventListener('dblclick', () => {
     const selIdx = state.selectedSheetItemIndices[0] ?? state.selectedSheetItemIdx;
     const sel = state.sheetItems[selIdx];
@@ -934,6 +1094,48 @@ function calculateGridSlots(paperW_MM, paperH_MM, photoW_MM, photoH_MM, targetCo
   // Compute absolute maximum columns that can physically fit on the paper width
   const maxColsPossible = Math.max(1, Math.floor((paperW_MM - (minSideMargin * 2) + minGap) / (photoW_MM + minGap)));
 
+  // 0. FULL PAGE PRESET (Single photo filling the full A4/Paper sheet)
+  if (arrangement === 'fullPage') {
+    const mode = state.fullPageMode || 'fit';
+    const margin = (mode === 'borderless') ? 0 : Math.max(0, state.marginMM !== undefined ? state.marginMM : 10);
+    const availW = paperW_MM - (margin * 2);
+    const availH = paperH_MM - (margin * 2);
+
+    if (mode === 'fit') {
+      const photo = getActivePhoto();
+      const img = photo ? photo.img : null;
+      let imgW = photoW_MM;
+      let imgH = photoH_MM;
+      if (img && img.naturalWidth > 0 && img.naturalHeight > 0) {
+        imgW = img.naturalWidth;
+        imgH = img.naturalHeight;
+      }
+      const aspect = Math.max(0.1, imgW / imgH);
+
+      let targetW = availW;
+      let targetH = targetW / aspect;
+      if (targetH > availH) {
+        targetH = availH;
+        targetW = targetH * aspect;
+      }
+      const x = margin + ((availW - targetW) / 2);
+      const y = margin + ((availH - targetH) / 2);
+      return [{
+        x: Math.round(x * 10) / 10,
+        y: Math.round(y * 10) / 10,
+        w: Math.round(targetW * 10) / 10,
+        h: Math.round(targetH * 10) / 10
+      }];
+    } else {
+      return [{
+        x: Math.round(margin * 10) / 10,
+        y: Math.round(margin * 10) / 10,
+        w: Math.round(availW * 10) / 10,
+        h: Math.round(availH * 10) / 10
+      }];
+    }
+  }
+
   // 1. SINGLE ROW STRIP PRESET (e.g. 5 Photos in one row across top of A4)
   if (arrangement === 'singleRow') {
     // If target fits across paper width (5 photos of 35mm on A4 210mm fits perfectly with 5mm gaps and 7.5mm margins!)
@@ -1087,6 +1289,58 @@ function calculateGridSlots(paperW_MM, paperH_MM, photoW_MM, photoH_MM, targetCo
   return slots;
 }
 
+function getSheetItemHandleAt(item, mouseX, mouseY) {
+  if (!item) return null;
+  const pointsPerMM = 72 / 25.4;
+  const displayScale = getEffectiveSheetScale();
+
+  const xPx = item.xMM * pointsPerMM * displayScale;
+  const yPx = item.yMM * pointsPerMM * displayScale;
+  const wPx = item.wMM * pointsPerMM * displayScale;
+  const hPx = item.hMM * pointsPerMM * displayScale;
+
+  const hitRadius = 8; // 8px grabbing radius
+  const handles = [
+    { name: 'tl', x: xPx, y: yPx },
+    { name: 't',  x: xPx + wPx / 2, y: yPx },
+    { name: 'tr', x: xPx + wPx, y: yPx },
+    { name: 'r',  x: xPx + wPx, y: yPx + hPx / 2 },
+    { name: 'br', x: xPx + wPx, y: yPx + hPx },
+    { name: 'b',  x: xPx + wPx / 2, y: yPx + hPx },
+    { name: 'bl', x: xPx, y: yPx + hPx },
+    { name: 'l',  x: xPx, y: yPx + hPx / 2 }
+  ];
+
+  for (let i = 0; i < handles.length; i++) {
+    const h = handles[i];
+    const dx = mouseX - h.x;
+    const dy = mouseY - h.y;
+    if (Math.sqrt(dx * dx + dy * dy) <= hitRadius) {
+      return h.name;
+    }
+  }
+  return null;
+}
+
+function getCursorForHandle(handleName) {
+  switch (handleName) {
+    case 'tl':
+    case 'br':
+      return 'nwse-resize';
+    case 'tr':
+    case 'bl':
+      return 'nesw-resize';
+    case 't':
+    case 'b':
+      return 'ns-resize';
+    case 'l':
+    case 'r':
+      return 'ew-resize';
+    default:
+      return 'default';
+  }
+}
+
 function handleSheetCanvasMouseDown(e) {
   const canvas = document.getElementById('sheetCanvas');
   const rect = canvas.getBoundingClientRect();
@@ -1095,6 +1349,29 @@ function handleSheetCanvasMouseDown(e) {
 
   const pointsPerMM = 72 / 25.4;
   const displayScale = getEffectiveSheetScale();
+
+  // 1. Check if clicked on a resize handle of the currently selected item
+  if (state.selectedSheetItemIdx >= 0 && state.sheetItems[state.selectedSheetItemIdx]) {
+    const selItem = state.sheetItems[state.selectedSheetItemIdx];
+    const hitHandle = getSheetItemHandleAt(selItem, mouseX, mouseY);
+    if (hitHandle) {
+      state.isResizingSheetItem = true;
+      state.resizeHandle = hitHandle;
+      state.resizeStartMouseX = e.clientX;
+      state.resizeStartMouseY = e.clientY;
+      state.resizeStartItem = {
+        xMM: selItem.xMM,
+        yMM: selItem.yMM,
+        wMM: selItem.wMM,
+        hMM: selItem.hMM,
+        aspect: selItem.wMM / selItem.hMM
+      };
+      renderSheet();
+      updateFloatingMenu();
+      syncSelectedPhotoInputs();
+      return;
+    }
+  }
 
   // Check which sheet item was clicked (iterate in reverse so top items are checked first)
   let found = -1;
@@ -1154,6 +1431,7 @@ function handleSheetCanvasMouseDown(e) {
     renderSheet();
     updateFloatingMenu();
     updateSelectionUI();
+    syncSelectedPhotoInputs();
   } else {
     // Clicked on empty canvas space
     if (!isMultiKey) {
@@ -1171,6 +1449,7 @@ function handleSheetCanvasMouseDown(e) {
     renderSheet();
     updateFloatingMenu();
     updateSelectionUI();
+    syncSelectedPhotoInputs();
   }
 }
 
@@ -1178,6 +1457,108 @@ function handleSheetItemDragMove(e) {
   const displayScale = getEffectiveSheetScale();
   const pointsPerMM = 72 / 25.4;
   const pixelsPerMM = pointsPerMM * displayScale;
+
+  if (state.isResizingSheetItem && state.resizeStartItem) {
+    let deltaX_MM = (e.clientX - state.resizeStartMouseX) / pixelsPerMM;
+    let deltaY_MM = (e.clientY - state.resizeStartMouseY) / pixelsPerMM;
+
+    const paperMM = getPaperDimensionsMM();
+    const start = state.resizeStartItem;
+    const item = state.sheetItems[state.selectedSheetItemIdx];
+    if (!item) return;
+
+    const lockAspect = state.lockSheetItemAspect ? !e.altKey : (e.shiftKey);
+    const aspect = start.aspect || (start.wMM / start.hMM);
+
+    let newX = start.xMM;
+    let newY = start.yMM;
+    let newW = start.wMM;
+    let newH = start.hMM;
+
+    const handle = state.resizeHandle;
+
+    if (handle === 'br') {
+      newW = Math.max(10, start.wMM + deltaX_MM);
+      if (lockAspect) {
+        newH = newW / aspect;
+      } else {
+        newH = Math.max(10, start.hMM + deltaY_MM);
+      }
+    } else if (handle === 'r') {
+      newW = Math.max(10, start.wMM + deltaX_MM);
+      if (lockAspect) {
+        const diffH = (newW / aspect) - start.hMM;
+        newH = newW / aspect;
+        newY = start.yMM - (diffH / 2);
+      }
+    } else if (handle === 'b') {
+      newH = Math.max(10, start.hMM + deltaY_MM);
+      if (lockAspect) {
+        const diffW = (newH * aspect) - start.wMM;
+        newW = newH * aspect;
+        newX = start.xMM - (diffW / 2);
+      }
+    } else if (handle === 'bl') {
+      newW = Math.max(10, start.wMM - deltaX_MM);
+      newX = start.xMM + (start.wMM - newW);
+      if (lockAspect) {
+        newH = newW / aspect;
+      } else {
+        newH = Math.max(10, start.hMM + deltaY_MM);
+      }
+    } else if (handle === 'tr') {
+      newW = Math.max(10, start.wMM + deltaX_MM);
+      if (lockAspect) {
+        newH = newW / aspect;
+        newY = start.yMM + (start.hMM - newH);
+      } else {
+        newH = Math.max(10, start.hMM - deltaY_MM);
+        newY = start.yMM + (start.hMM - newH);
+      }
+    } else if (handle === 'tl') {
+      newW = Math.max(10, start.wMM - deltaX_MM);
+      newX = start.xMM + (start.wMM - newW);
+      if (lockAspect) {
+        newH = newW / aspect;
+        newY = start.yMM + (start.hMM - newH);
+      } else {
+        newH = Math.max(10, start.hMM - deltaY_MM);
+        newY = start.yMM + (start.hMM - newH);
+      }
+    } else if (handle === 't') {
+      newH = Math.max(10, start.hMM - deltaY_MM);
+      newY = start.yMM + (start.hMM - newH);
+      if (lockAspect) {
+        const diffW = (newH * aspect) - start.wMM;
+        newW = newH * aspect;
+        newX = start.xMM - (diffW / 2);
+      }
+    } else if (handle === 'l') {
+      newW = Math.max(10, start.wMM - deltaX_MM);
+      newX = start.xMM + (start.wMM - newW);
+      if (lockAspect) {
+        const diffH = (newW / aspect) - start.hMM;
+        newH = newW / aspect;
+        newY = start.yMM - (diffH / 2);
+      }
+    }
+
+    // Keep within paper boundaries
+    newW = Math.min(newW, paperMM.w);
+    newH = Math.min(newH, paperMM.h);
+    newX = Math.max(0, Math.min(paperMM.w - newW, newX));
+    newY = Math.max(0, Math.min(paperMM.h - newH, newY));
+
+    item.xMM = Math.round(newX * 10) / 10;
+    item.yMM = Math.round(newY * 10) / 10;
+    item.wMM = Math.round(newW * 10) / 10;
+    item.hMM = Math.round(newH * 10) / 10;
+
+    renderSheet();
+    updateFloatingMenu();
+    syncSelectedPhotoInputs();
+    return;
+  }
 
   if (state.isDraggingSheetItem && state.dragInitialPositions.length > 0) {
     state.hasMovedDuringDrag = true;
@@ -1301,6 +1682,17 @@ function updateFloatingMenu() {
   menu.style.left = `${centerX_Pt}px`;
   menu.style.top = `${topY_Pt}px`;
 
+  const floatDim = document.getElementById('floatDimensionBadge');
+  if (floatDim) {
+    if (selectedItems.length === 1) {
+      floatDim.style.display = 'inline-flex';
+      floatDim.textContent = `${Math.round(selectedItems[0].wMM)} × ${Math.round(selectedItems[0].hMM)} mm`;
+    } else {
+      floatDim.style.display = 'inline-flex';
+      floatDim.textContent = `${selectedItems.length} Selected`;
+    }
+  }
+
   const btnFloatCopy = document.getElementById('btnFloatCopy');
   if (btnFloatCopy) {
     btnFloatCopy.innerHTML = selectedItems.length > 1 ? `⧉ Copy (${selectedItems.length})` : `⧉ Copy (⌘D)`;
@@ -1343,6 +1735,138 @@ function updateSelectionUI() {
     delBtn.style.display = count > 0 ? 'inline-flex' : 'none';
     delBtn.textContent = count > 1 ? `✕ Delete (${count})` : '✕ Delete';
   }
+
+  syncSelectedPhotoInputs();
+}
+
+// MARK: - Selected Photo Freeform Resizing & Full A4 Helpers
+function syncSelectedPhotoInputs() {
+  const item = state.sheetItems[state.selectedSheetItemIdx];
+  const lblName = document.getElementById('lblSelectedPhotoItemName');
+  const inputW = document.getElementById('numSelectedPhotoW');
+  const inputH = document.getElementById('numSelectedPhotoH');
+  const chkAspect = document.getElementById('chkLockAspectResize');
+  const floatDim = document.getElementById('floatDimensionBadge');
+
+  if (!item) {
+    if (lblName) lblName.textContent = 'No Photo Selected';
+    if (inputW) inputW.value = 35;
+    if (inputH) inputH.value = 45;
+    return;
+  }
+
+  const count = state.selectedSheetItemIndices.length;
+  if (lblName) {
+    if (count > 1) {
+      lblName.textContent = `${count} Photos Selected`;
+    } else {
+      lblName.textContent = `Photo #${state.selectedSheetItemIdx + 1} (${item.wMM.toFixed(1)} × ${item.hMM.toFixed(1)} mm)`;
+    }
+  }
+
+  if (inputW) inputW.value = Math.round(item.wMM * 10) / 10;
+  if (inputH) inputH.value = Math.round(item.hMM * 10) / 10;
+  if (chkAspect) chkAspect.checked = state.lockSheetItemAspect;
+  if (floatDim) floatDim.textContent = `${Math.round(item.wMM)} × ${Math.round(item.hMM)} mm`;
+}
+
+function resizeSelectedPhoto(wMM, hMM) {
+  if (state.selectedSheetItemIdx < 0 || !state.sheetItems[state.selectedSheetItemIdx]) return;
+  const paperMM = getPaperDimensionsMM();
+  const selectedIndices = state.selectedSheetItemIndices.length > 0 ? state.selectedSheetItemIndices : [state.selectedSheetItemIdx];
+
+  selectedIndices.forEach(idx => {
+    const item = state.sheetItems[idx];
+    if (!item) return;
+
+    item.wMM = Math.max(10, Math.min(paperMM.w, Math.round(wMM * 10) / 10));
+    item.hMM = Math.max(10, Math.min(paperMM.h, Math.round(hMM * 10) / 10));
+
+    // Keep within paper
+    item.xMM = Math.max(0, Math.min(paperMM.w - item.wMM, item.xMM));
+    item.yMM = Math.max(0, Math.min(paperMM.h - item.hMM, item.yMM));
+  });
+
+  renderSheet();
+  updateFloatingMenu();
+  syncSelectedPhotoInputs();
+}
+
+function resetSelectedPhotoSize() {
+  const std = getPassportDimensionsMM();
+  resizeSelectedPhoto(std.w, std.h);
+}
+
+function makeSelectedPhotoFullA4(mode = 'fit') {
+  if (state.selectedSheetItemIdx < 0 || !state.sheetItems[state.selectedSheetItemIdx]) {
+    if (state.sheetItems.length > 0) {
+      state.selectedSheetItemIdx = 0;
+      state.selectedSheetItemIndices = [0];
+    } else {
+      return;
+    }
+  }
+
+  const paperMM = getPaperDimensionsMM();
+  const selectedIndices = state.selectedSheetItemIndices.length > 0 ? state.selectedSheetItemIndices : [state.selectedSheetItemIdx];
+
+  selectedIndices.forEach(idx => {
+    const item = state.sheetItems[idx];
+    if (!item) return;
+
+    if (mode === 'borderless') {
+      item.xMM = 0;
+      item.yMM = 0;
+      item.wMM = paperMM.w;
+      item.hMM = paperMM.h;
+    } else if (mode === 'margins') {
+      const margin = Math.max(0, state.marginMM !== undefined ? state.marginMM : 10);
+      item.xMM = margin;
+      item.yMM = margin;
+      item.wMM = Math.round((paperMM.w - margin * 2) * 10) / 10;
+      item.hMM = Math.round((paperMM.h - margin * 2) * 10) / 10;
+    } else { // 'fit' (proportional, preserves photo aspect ratio without clipping)
+      const photo = state.photos[item.photoIdx] || state.photos[0];
+      const img = photo?.img;
+      const imgW = img?.naturalWidth || item.wMM || 35;
+      const imgH = img?.naturalHeight || item.hMM || 45;
+      const photoAspect = Math.max(0.1, imgW / imgH);
+      const margin = Math.max(0, state.marginMM !== undefined ? state.marginMM : 10);
+      const availW = paperMM.w - (margin * 2);
+      const availH = paperMM.h - (margin * 2);
+
+      let targetW = availW;
+      let targetH = targetW / photoAspect;
+      if (targetH > availH) {
+        targetH = availH;
+        targetW = targetH * photoAspect;
+      }
+      item.wMM = Math.round(targetW * 10) / 10;
+      item.hMM = Math.round(targetH * 10) / 10;
+      item.xMM = Math.round((margin + (availW - item.wMM) / 2) * 10) / 10;
+      item.yMM = Math.round((margin + (availH - item.hMM) / 2) * 10) / 10;
+    }
+  });
+
+  renderSheet();
+  updateFloatingMenu();
+  syncSelectedPhotoInputs();
+}
+
+function applyQuickFullA4() {
+  state.paperSize = 'a4';
+  state.paperOrient = 'portrait';
+  document.getElementById('selPaperSize').value = 'a4';
+  document.querySelector('input[name="paperOrient"][value="portrait"]').checked = true;
+  state.targetCount = 1;
+  state.arrangement = 'fullPage';
+  document.getElementById('selArrangement').value = 'fullPage';
+  const fullPageRow = document.getElementById('fullPageOptionsRow');
+  if (fullPageRow) fullPageRow.style.display = 'flex';
+  updateCountChips();
+  syncControls();
+  rebuildSheetGrid(1, 'fullPage');
+  switchTab('sheet');
 }
 
 function getEffectiveSheetScale() {
@@ -1892,11 +2416,19 @@ function syncControls() {
     lblBadge.textContent = (state.printQuality || 'high') === 'high' ? 'High (300+ DPI)' : 'Standard';
   }
   document.getElementById('selArrangement').value = state.arrangement;
+  if (document.getElementById('selFullPageMode')) {
+    document.getElementById('selFullPageMode').value = state.fullPageMode || 'fit';
+  }
+  const fullPageRow = document.getElementById('fullPageOptionsRow');
+  if (fullPageRow) {
+    fullPageRow.style.display = state.arrangement === 'fullPage' ? 'flex' : 'none';
+  }
   document.getElementById('selAlignment').value = state.alignment;
   document.getElementById('sliderMargin').value = state.marginMM;
   document.getElementById('sliderGap').value = state.gapMM;
   document.getElementById('lblMarginVal').textContent = `${Math.round(state.marginMM)} mm`;
   document.getElementById('lblGapVal').textContent = `${state.gapMM.toFixed(1)} mm`;
+  syncSelectedPhotoInputs();
   updateUI();
 }
 
@@ -1994,7 +2526,11 @@ function updateUI() {
   const paperMM = getPaperDimensionsMM();
   const paperPreset = PAPER_PRESETS[state.paperSize] || PAPER_PRESETS.a4;
   document.getElementById('footerPaperLabel').textContent = `${paperPreset.name.split(' ')[0]} (${state.paperOrient})`;
-  document.getElementById('footerPhotoLabel').textContent = `${dim.w} × ${dim.h} mm`;
+  if (state.arrangement === 'fullPage') {
+    document.getElementById('footerPhotoLabel').textContent = `Full Page (${paperMM.w} × ${paperMM.h} mm)`;
+  } else {
+    document.getElementById('footerPhotoLabel').textContent = `${dim.w} × ${dim.h} mm`;
+  }
   document.getElementById('footerSlotsLabel').textContent = `${state.sheetItems.length} Photos`;
 
   const mediaNames = {
@@ -2008,6 +2544,7 @@ function updateUI() {
     footerMedia.textContent = mediaNames[state.paperType || 'glossy'] || 'Glossy Photo Paper';
   }
 
+  syncSelectedPhotoInputs();
   renderCrop();
   renderSheet();
 }
@@ -2501,6 +3038,7 @@ function renderSheet() {
 
   const paperMM = getPaperDimensionsMM();
   const photoMM = getPassportDimensionsMM();
+  const isFullA4Borderless = state.arrangement === 'fullPage' && state.fullPageMode === 'borderless';
 
   const slotBadge = document.getElementById('sheetSlotBadge');
   if (slotBadge) slotBadge.textContent = `${state.sheetItems.length} Photos`;
@@ -2552,7 +3090,7 @@ function renderSheet() {
       ctx.strokeRect(xPt, yPt, wPt, hPt);
     }
 
-    if (state.showCropMarks) drawCropMarks(ctx, xPt, yPt, wPt, hPt);
+    if (!isFullA4Borderless && state.showCropMarks) drawCropMarks(ctx, xPt, yPt, wPt, hPt);
 
     // Selected Photo Highlight on Sheet (supports multiple selected photos!)
     const isSelected = state.selectedSheetItemIndices && state.selectedSheetItemIndices.includes(idx);
@@ -2568,13 +3106,51 @@ function renderSheet() {
       ctx.lineWidth = 2.0 / displayScale;
       ctx.strokeRect(xPt - 1, yPt - 1, wPt + 2, hPt + 2);
 
-      // Corner handles
-      const handleR = 3.5 / displayScale;
-      ctx.fillStyle = '#2563EB';
-      ctx.fillRect(xPt - handleR - 1, yPt - handleR - 1, handleR * 2, handleR * 2);
-      ctx.fillRect(xPt + wPt - handleR + 1, yPt - handleR - 1, handleR * 2, handleR * 2);
-      ctx.fillRect(xPt - handleR - 1, yPt + hPt - handleR + 1, handleR * 2, handleR * 2);
-      ctx.fillRect(xPt + wPt - handleR + 1, yPt + hPt - handleR + 1, handleR * 2, handleR * 2);
+      // Corner & Edge 8 resize handles for primary selected item
+      if (idx === state.selectedSheetItemIdx) {
+        const handleR = 3.5 / displayScale; // ~7px square
+        const handles = [
+          { name: 'tl', x: xPt, y: yPt },
+          { name: 't',  x: xPt + wPt / 2, y: yPt },
+          { name: 'tr', x: xPt + wPt, y: yPt },
+          { name: 'r',  x: xPt + wPt, y: yPt + hPt / 2 },
+          { name: 'br', x: xPt + wPt, y: yPt + hPt },
+          { name: 'b',  x: xPt + wPt / 2, y: yPt + hPt },
+          { name: 'bl', x: xPt, y: yPt + hPt },
+          { name: 'l',  x: xPt, y: yPt + hPt / 2 }
+        ];
+
+        handles.forEach(h => {
+          ctx.fillStyle = '#FFFFFF';
+          ctx.strokeStyle = '#2563EB';
+          ctx.lineWidth = 1.5 / displayScale;
+          ctx.beginPath();
+          ctx.rect(h.x - handleR, h.y - handleR, handleR * 2, handleR * 2);
+          ctx.fill();
+          ctx.stroke();
+        });
+
+        // Live Dimension Badge during resize
+        if (state.isResizingSheetItem) {
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+          const dimText = `📐 ${Math.round(item.wMM)} × ${Math.round(item.hMM)} mm`;
+          ctx.font = `bold ${9 / displayScale}px -apple-system, sans-serif`;
+          const textW = ctx.measureText(dimText).width;
+          const badgeX = xPt + (wPt - textW) / 2 - (8 / displayScale);
+          const badgeY = yPt + hPt + (6 / displayScale);
+          ctx.fillRect(badgeX, badgeY, textW + (16 / displayScale), 16 / displayScale);
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillText(dimText, badgeX + (8 / displayScale), badgeY + (11 / displayScale));
+        }
+      } else {
+        // Multi-select secondary items get simple corner pips
+        const handleR = 3.0 / displayScale;
+        ctx.fillStyle = '#2563EB';
+        ctx.fillRect(xPt - handleR, yPt - handleR, handleR * 2, handleR * 2);
+        ctx.fillRect(xPt + wPt - handleR, yPt - handleR, handleR * 2, handleR * 2);
+        ctx.fillRect(xPt - handleR, yPt + hPt - handleR, handleR * 2, handleR * 2);
+        ctx.fillRect(xPt + wPt - handleR, yPt + hPt - handleR, handleR * 2, handleR * 2);
+      }
 
       // Live Position Badge during drag (show on primary dragged item)
       if (state.isDraggingSheetItem && idx === state.selectedSheetItemIdx) {
@@ -2610,7 +3186,7 @@ function renderSheet() {
     ctx.restore();
   }
 
-  if (state.showCutLines) {
+  if (!isFullA4Borderless && state.showCutLines) {
     ctx.save();
     ctx.strokeStyle = 'rgba(156, 163, 175, 0.6)';
     ctx.lineWidth = 0.5;
@@ -2621,11 +3197,11 @@ function renderSheet() {
     ctx.restore();
   }
 
-  if (state.showCalibrationRuler) {
+  if (!isFullA4Borderless && state.showCalibrationRuler) {
     drawCalibrationRuler(ctx, paperPointsW, paperPointsH, pointsPerMM);
   }
 
-  if (state.showSheetHeader) {
+  if (!isFullA4Borderless && state.showSheetHeader) {
     ctx.save();
     ctx.fillStyle = '#64748B';
     ctx.font = '6.5px -apple-system, sans-serif';
@@ -2758,6 +3334,7 @@ function runAIBackgroundWhitener() {
 function generateSheet300DPICanvas() {
   const paperMM = getPaperDimensionsMM();
   const photoMM = getPassportDimensionsMM();
+  const isFullA4Borderless = state.arrangement === 'fullPage' && state.fullPageMode === 'borderless';
 
   const dpi = 300;
   const pixelW = Math.round((paperMM.w / 25.4) * dpi);
@@ -2786,10 +3363,10 @@ function generateSheet300DPICanvas() {
     const hPt = item.hMM * pointsPerMM;
 
     if (photo) drawAdjustedPhoto(ctx, photo, xPt, yPt, wPt, hPt);
-    if (state.showCropMarks) drawCropMarks(ctx, xPt, yPt, wPt, hPt);
+    if (!isFullA4Borderless && state.showCropMarks) drawCropMarks(ctx, xPt, yPt, wPt, hPt);
   });
 
-  if (state.showCutLines) {
+  if (!isFullA4Borderless && state.showCutLines) {
     ctx.save();
     ctx.strokeStyle = 'rgba(156, 163, 175, 0.6)';
     ctx.lineWidth = 0.5;
@@ -2800,11 +3377,11 @@ function generateSheet300DPICanvas() {
     ctx.restore();
   }
 
-  if (state.showCalibrationRuler) {
+  if (!isFullA4Borderless && state.showCalibrationRuler) {
     drawCalibrationRuler(ctx, paperPointsW, paperPointsH, pointsPerMM);
   }
 
-  if (state.showSheetHeader) {
+  if (!isFullA4Borderless && state.showSheetHeader) {
     ctx.save();
     ctx.fillStyle = '#64748B';
     ctx.font = '6.5px -apple-system, sans-serif';

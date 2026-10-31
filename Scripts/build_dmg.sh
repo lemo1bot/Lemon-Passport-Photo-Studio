@@ -49,9 +49,9 @@ cat << EOF > "${APP_BUNDLE}/Contents/Info.plist"
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.1.0</string>
+    <string>1.2.0</string>
     <key>CFBundleVersion</key>
-    <string>2</string>
+    <string>3</string>
     <key>LSMinimumSystemVersion</key>
     <string>13.0</string>
     <key>NSHighResolutionCapable</key>
@@ -95,10 +95,18 @@ DIRECT PRINTING:
 • "Quick Print" (Cmd+Shift+P) sends directly to your default printer with 1 click.
 
 TOP FEATURES:
+• "1 Photo Full A4" Single Photo Printing:
+  - 1-Click "🖼️ 1 Photo Full A4" Quick Preset
+  - Fit to Page (Proportional, No Crop), Margins (10mm for Inkjet Trays), Borderless Fill (210×297mm)
+• Freeform Photo Resizing:
+  - Interactive 8-point corner/edge resize handles with live mm dimension tooltip
+  - Custom Width (mm) and Height (mm) manual inputs in Inspector
+  - Quick Size Chips: 35×45mm, 2×2", 4×6", 5×7", Full A4, Fit to A4
 • "5 Photos on A4" Presets:
   - Top Strip (1 Row of 5 across top of A4, leaving the rest of the sheet intact to save paper)
   - Balanced Grid (3 + 2 Centered)
 • 12+ Official Passport Standards: India, US (2x2"), UK/Schengen, Canada, Australia, Japan, etc.
+• Paper Types: Glossy Photo Paper, Semi-Gloss / Luster, Matte, Plain
 • Biometric Eye, Head (70-80%), and Chin Guidelines Overlay
 • AI Auto-Align Face & AI Pure White Background (#FFFFFF)
 • Corner Crop Marks & Dashed Cutting Lines for easy scissors/trimmer cutting
@@ -132,17 +140,22 @@ if let img = NSImage(contentsOfFile: icns) {
 }
 '
 
-# Create versioned copy Lemon-v1.1.0.dmg
-echo "-> Creating versioned copy Lemon-v1.1.0.dmg..."
-cp -p "${DMG_PATH}" "${PROJECT_DIR}/Lemon-v1.1.0.dmg"
+# Create versioned copy Lemon-v1.2.0.dmg
+echo "-> Creating versioned copy Lemon-v1.2.0.dmg..."
+cp -p "${DMG_PATH}" "${PROJECT_DIR}/Lemon-v1.2.0.dmg"
 swift -e '
 import AppKit
-let dmg = "'"${PROJECT_DIR}"'/Lemon-v1.1.0.dmg"
+let dmg = "'"${PROJECT_DIR}"'/Lemon-v1.2.0.dmg"
 let icns = "'"${PROJECT_DIR}"'/Resources/AppIcon.icns"
 if let img = NSImage(contentsOfFile: icns) {
     _ = NSWorkspace.shared.setIcon(img, forFile: dmg, options: [])
 }
 '
+
+# Copy to Desktop
+echo "-> Copying DMGs to Desktop..."
+cp -p "${DMG_PATH}" "/Users/lemon/Desktop/Lemon.dmg"
+cp -p "${PROJECT_DIR}/Lemon-v1.2.0.dmg" "/Users/lemon/Desktop/Lemon-v1.2.0.dmg"
 
 # 8. Install directly into /Applications
 echo "-> Installing to /Applications/${APP_NAME}.app..."

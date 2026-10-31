@@ -14,7 +14,7 @@
         <div class="app-logo">
           <img src="assets/logo.png" alt="Lemon Logo" class="app-logo-img">
           <span class="app-title">Lemon</span>
-          <span class="badge-version">v1.1.0</span>
+          <span class="badge-version">v1.2.0</span>
         </div>
 
         <!-- Quick 1-Click Layout Presets -->
@@ -24,6 +24,9 @@
           </button>
           <button id="btnQuick5A4Grid" class="preset-pill" title="5 Photos arranged in 2 rows (3+2)">
             5 on A4 (3+2)
+          </button>
+          <button id="btnQuickFullA4" class="preset-pill highlight-blue" title="Print a single photo filling the full A4 page">
+            🖼️ 1 Photo Full A4
           </button>
           <button id="btnQuick4x6" class="preset-pill" title="6 Photos on 4x6 inch (10x15cm) photo paper">
             6 on 4×6"
@@ -169,6 +172,11 @@
                 🔄 Auto-Grid
               </button>
 
+              <!-- 1 Photo Full A4 shortcut in toolbar -->
+              <button id="btnToolbarFullA4" class="btn btn-sm btn-ghost" title="Format sheet as 1 Photo Full A4">
+                🖼️ 1 Photo Full A4
+              </button>
+
               <!-- Snap to Grid Toggle -->
               <label class="toggle-label" title="Snap photos to 5mm increments while dragging">
                 <input type="checkbox" id="chkSnapGrid" checked>
@@ -196,7 +204,7 @@
 
           <!-- Freeform Drag-and-Drop Instruction Banner -->
           <div class="sheet-hint-banner">
-            <span>✋ <b>Multi-Select & Copy Together</b>: Click <b>Select All (⌘A)</b> and <b>⧉ Make Copy (⌘D)</b> to duplicate all photos together! Drag across blank paper to box-select. Drag any photo to move them anywhere on A4.</span>
+            <span>✋ <b>Drag Anywhere & Resize Any Photo</b>: Drag the 8 corner/edge handles of any photo to resize to any size. Use <b>🖼️ 1 Photo Full A4</b> to print full page. <b>Select All (⌘A)</b> and <b>⧉ Make Copy (⌘D)</b> to duplicate rows!</span>
           </div>
 
           <!-- Sheet Canvas Area with Interactive Drag & Drop -->
@@ -206,6 +214,8 @@
 
               <!-- Floating Action Menu over Selected Sheet Photo -->
               <div id="sheetFloatingMenu" class="sheet-floating-menu" style="display: none;">
+                <span id="floatDimensionBadge" class="float-dim-badge">35 × 45 mm</span>
+                <button id="btnFloatFullA4" class="float-btn" title="Expand this photo to Full A4 page">🖼️ Full A4</button>
                 <button id="btnFloatEdit" class="float-btn" title="Edit this photo">✏️ Edit</button>
                 <button id="btnFloatCopy" class="float-btn" title="Make a copy (Cmd+D)">⧉ Copy</button>
                 <button id="btnFloatDelete" class="float-btn float-delete" title="Remove from sheet">✕</button>
@@ -545,6 +555,67 @@
 
         <!-- PANEL B: SHEET LAYOUT CONTROLS -->
         <div id="inspectorSheetLayout" class="inspector-subpanel">
+          <!-- Section 0: Selected Photo Size (Resize Any Photo by Self!) -->
+          <div id="inspectorSelectedPhotoSection" class="inspector-section">
+            <div class="section-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
+              Selected Photo Size (Resize)
+            </div>
+
+            <div class="form-row">
+              <div class="flex-between">
+                <span id="lblSelectedPhotoItemName" class="badge-accent">Photo #1 Selected</span>
+                <div class="flex-row gap-4" style="flex: unset; display: flex; gap: 4px;">
+                  <button id="btnMakeSelectedFullA4" class="btn btn-xs btn-primary" title="Resize this photo to full A4 page">
+                    🖼️ Full A4
+                  </button>
+                  <button id="btnResetSelectedPhotoSize" class="btn btn-xs btn-ghost" title="Reset to standard passport size">
+                    ↺ Reset
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-row flex-row">
+              <div>
+                <label>Width (mm):</label>
+                <div class="input-unit-wrapper">
+                  <input type="number" id="numSelectedPhotoW" min="10" max="350" step="0.5" value="35">
+                  <span class="unit-tag">mm</span>
+                </div>
+              </div>
+              <div>
+                <label>Height (mm):</label>
+                <div class="input-unit-wrapper">
+                  <input type="number" id="numSelectedPhotoH" min="10" max="450" step="0.5" value="45">
+                  <span class="unit-tag">mm</span>
+                </div>
+              </div>
+            </div>
+
+            <label class="check-row" style="margin-top: 2px;">
+              <input type="checkbox" id="chkLockAspectResize" checked>
+              <span>🔒 Lock Aspect Ratio during resize</span>
+            </label>
+
+            <!-- Quick 1-Click Size Presets for Selected Photo -->
+            <div class="form-row">
+              <label>Quick Resize Presets:</label>
+              <div class="quick-size-grid">
+                <button class="btn-size-chip" data-w="35" data-h="45" title="Standard Passport (35 × 45 mm)">35 × 45 mm</button>
+                <button class="btn-size-chip" data-w="50.8" data-h="50.8" title="US / India 2×2 inches (51 × 51 mm)">2 × 2" (51mm)</button>
+                <button class="btn-size-chip" data-w="100" data-h="150" title="4 × 6 inches (10 × 15 cm)">4 × 6"</button>
+                <button class="btn-size-chip" data-w="127" data-h="178" title="5 × 7 inches (13 × 18 cm)">5 × 7"</button>
+                <button class="btn-size-chip highlight-chip" data-action="fullA4" title="Full A4 Sheet">🖼️ Full A4</button>
+                <button class="btn-size-chip" data-action="fitA4" title="Fit to A4 (Preserve Aspect)">Fit to A4</button>
+              </div>
+            </div>
+
+            <div class="resize-tip">
+              <span>💡 <b>Interactive Drag</b>: Drag any of the 8 white corner/edge handles on the selected photo to resize it freely on the paper!</span>
+            </div>
+          </div>
+
           <!-- Section 1: Sheet Layout (Core 5 on A4 feature!) -->
           <div class="inspector-section">
             <div class="section-title">
@@ -646,7 +717,18 @@
               <select id="selArrangement">
                 <option value="singleRow" selected>Single Row Strip (Top of A4)</option>
                 <option value="balanced">Balanced Grid (e.g. 3+2)</option>
+                <option value="fullPage">🖼️ Full Page / Full A4 (1 Photo)</option>
                 <option value="customGrid">Custom Columns × Rows</option>
+              </select>
+            </div>
+
+            <!-- Full Page Options (Visible when fullPage is selected) -->
+            <div id="fullPageOptionsRow" class="form-row" style="display: none;">
+              <label>Full Page Fit Mode:</label>
+              <select id="selFullPageMode">
+                <option value="fit" selected>Proportional Fit (No Crop, Centered)</option>
+                <option value="margins">With Margins (10 mm Border for Printers)</option>
+                <option value="borderless">Borderless Fill (Exact 210 × 297 mm)</option>
               </select>
             </div>
 

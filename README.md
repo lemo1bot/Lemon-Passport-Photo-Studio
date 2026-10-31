@@ -12,17 +12,45 @@
 
 Get the official disk image directly from GitHub Releases:
 
-* 👉 **[Download Lemon-v1.1.0.dmg (Versioned)](https://github.com/lemo1bot/Lemon-Passport-Photo-Studio/releases/download/v1.1.0/Lemon-v1.1.0.dmg)** *(Recommended)*
-* 👉 **[Download Lemon.dmg](https://github.com/lemo1bot/Lemon-Passport-Photo-Studio/releases/download/v1.1.0/Lemon.dmg)** *(Latest)*
+* 👉 **[Download Lemon-v1.2.0.dmg (Versioned)](https://github.com/lemo1bot/Lemon-Passport-Photo-Studio/releases/download/v1.2.0/Lemon-v1.2.0.dmg)** *(Recommended)*
+* 👉 **[Download Lemon.dmg](https://github.com/lemo1bot/Lemon-Passport-Photo-Studio/releases/download/v1.2.0/Lemon.dmg)** *(Latest)*
 
 ### Quick Installation:
-1. Open **`Lemon-v1.1.0.dmg`** (or **`Lemon.dmg`**).
+1. Open **`Lemon-v1.2.0.dmg`** (or **`Lemon.dmg`**).
 2. Drag **`Lemon.app`** into the **Applications** folder shortcut.
 3. Launch **Lemon** from Launchpad, Spotlight, or the Applications folder!
 
 ---
 
 ## ✨ Key Features
+
+### 🖼️ Single Photo Full A4 Printing
+* **1-Click "🖼️ 1 Photo Full A4" Preset**: Instantly formats a single customer portrait or high-resolution photograph to fill an entire A4 page ($210 \times 297\text{ mm}$ or $2480 \times 3508\text{ px}$ at 300 DPI).
+* **3 Full Page Modes**:
+  * **Fit to Page (Proportional)**: Centers the photo and fits it inside the page without any cropping, clipping, or distortion.
+  * **With Margins (10 mm)**: Leaves standard 10 mm border for standard desktop inkjet printer sheet-feeders and paper trays.
+  * **Borderless Fill ($210 \times 297\text{ mm}$)**: Spans edge-to-edge across the entire A4 sheet. Automatically suppresses cut lines, rulers, and headers for a clean photographic print.
+* **1-Click Inspector & Floating Action**: Select any photo on the sheet and click **"🖼️ Full A4"** to immediately expand it to full page dimensions.
+
+---
+
+### 📐 Freeform Photo Resizing (Resize to Any Size)
+* **Interactive 8-Point Canvas Handles**: Select any photo on the sheet to reveal 8 resize handles (4 corners + 4 edges). Drag handles smoothly to resize to any custom dimension with dynamic cursor feedback (`nwse-resize`, `nesw-resize`, `ns-resize`, `ew-resize`).
+* **Live Dimension Tooltip**: Displays real-time physical millimeter dimensions (`📐 W × H mm`) directly beneath the photo while dragging.
+* **Exact Millimeter Inputs in Inspector**:
+  * Type custom **Width (mm)** and **Height (mm)** directly into Section 0 of the Sheet Inspector for sub-millimeter precision.
+  * **🔒 Lock Aspect Ratio**: Keeps photo proportions intact when editing width or height.
+* **Quick Size Chips**: Instant 1-click resize chips for standard photo print sizes:
+  * **35 × 45 mm** (Standard Passport)
+  * **2 × 2"** ($50.8 \times 50.8\text{ mm}$ US Visa)
+  * **4 × 6"** ($101.6 \times 152.4\text{ mm}$)
+  * **5 × 7"** ($127.0 \times 177.8\text{ mm}$)
+  * **Full A4** ($190 \times 277\text{ mm}$)
+  * **Fit to A4** ($190 \times 190\text{ mm}$)
+  * **↺ Reset** (Restores original preset size)
+* **Status Badges**: Floating menu displays the exact dimensions of the selected photo (e.g. `📐 100 × 150 mm`).
+
+---
 
 ### 🖨️ Direct 1:1 Millimeter Printing & Glossy Photo Paper
 * **🌟 Glossy Photo Paper Optimization**: Native CUPS and AppKit media configuration for **Canon G3010 / G3000 series**, Epson, and HP inkjet printers (`CNIJMediaType 68` / `50` / `PhotographicGlossy`) for rich photo blacks, vivid colors, and no ink smudging.
