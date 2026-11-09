@@ -12,6 +12,12 @@ const PASSPORT_PRESETS = {
   uae_visa: { name: "UAE / Dubai Visa", w: 40, h: 60, headMin: 0.70, headMax: 0.80, bg: "White", notes: "40×60 mm • White background" },
   square_35: { name: "Square ID (35×35 mm)", w: 35, h: 35, headMin: 0.65, headMax: 0.75, bg: "White", notes: "35×35 mm International ID" },
   standard_30x40: { name: "Standard ID (30×40 mm)", w: 30, h: 40, headMin: 0.70, headMax: 0.80, bg: "White", notes: "30×40 mm driver's license / student card" },
+  wallet: { name: "Wallet Photo (64 × 89 mm / 2.5 × 3.5\")", w: 63.5, h: 88.9, headMin: 0.50, headMax: 0.70, bg: "Any", notes: "64 × 89 mm (2.5 × 3.5\") Classic Wallet Size" },
+  stamp_1x1: { name: "1 × 1\" Stamp Photo (25.4 × 25.4 mm)", w: 25.4, h: 25.4, headMin: 0.60, headMax: 0.80, bg: "White", notes: "1 × 1 inch Stamp / Mini ID" },
+  photo_3r: { name: "3R Print (89 × 127 mm / 3.5 × 5\")", w: 88.9, h: 127.0, headMin: 0.40, headMax: 0.60, bg: "Any", notes: "3.5 × 5 inches (89 × 127 mm) Standard Photo" },
+  photo_4r: { name: "4R Print (101.6 × 152.4 mm / 4 × 6\")", w: 101.6, h: 152.4, headMin: 0.40, headMax: 0.60, bg: "Any", notes: "4 × 6 inches (102 × 152 mm) Photo Print" },
+  photo_5r: { name: "5R Print (127 × 177.8 mm / 5 × 7\")", w: 127.0, h: 177.8, headMin: 0.40, headMax: 0.60, bg: "Any", notes: "5 × 7 inches (127 × 178 mm) Portrait Frame" },
+  polaroid: { name: "Polaroid Style (89 × 108 mm)", w: 88.9, h: 108.0, headMin: 0.50, headMax: 0.70, bg: "Any", notes: "89 × 108 mm Classic Instant Print" },
   custom: { name: "Custom Size", w: 35, h: 45, headMin: 0.70, headMax: 0.80, bg: "Custom", notes: "Custom physical width & height" }
 };
 
@@ -20,9 +26,28 @@ const PAPER_PRESETS = {
   photo_4x6: { name: "4 × 6 inches (10 × 15 cm)", w: 101.6, h: 152.4 },
   us_letter: { name: "US Letter (8.5 × 11 in)", w: 215.9, h: 279.4 },
   photo_5x7: { name: "5 × 7 inches (13 × 18 cm)", w: 127, h: 177.8 },
+  photo_3x5: { name: "3.5 × 5 inches (9 × 13 cm / 3R)", w: 88.9, h: 127.0 },
+  wallet: { name: "Wallet Size (64 × 89 mm)", w: 63.5, h: 88.9 },
   a5: { name: "A5 Sheet (148 × 210 mm)", w: 148, h: 210 },
   a6: { name: "A6 Sheet (105 × 148 mm)", w: 105, h: 148 },
   custom: { name: "Custom Paper", w: 210, h: 297 }
+};
+
+// Export Size Presets dictionary for Save & Export Studio
+const EXPORT_SIZE_PRESETS = {
+  full_a4: { id: 'full_a4', name: 'Full A4 (210 × 297 mm)', w: 210, h: 297 },
+  passport: { id: 'passport', name: 'Standard Passport (35 × 45 mm)', w: 35, h: 45 },
+  us_2x2: { id: 'us_2x2', name: 'US Visa / Passport (2 × 2" / 51 × 51 mm)', w: 50.8, h: 50.8 },
+  stamp_1x1: { id: 'stamp_1x1', name: '1 × 1" Stamp (25.4 × 25.4 mm)', w: 25.4, h: 25.4 },
+  photo_4x6: { id: 'photo_4x6', name: '4 × 6" / 4R (101.6 × 152.4 mm)', w: 101.6, h: 152.4 },
+  photo_5x7: { id: 'photo_5x7', name: '5 × 7" / 5R (127 × 177.8 mm)', w: 127.0, h: 177.8 },
+  photo_3x5: { id: 'photo_3x5', name: '3.5 × 5" / 3R (88.9 × 127 mm)', w: 88.9, h: 127.0 },
+  wallet: { id: 'wallet', name: 'Wallet Photo (63.5 × 88.9 mm)', w: 63.5, h: 88.9 },
+  polaroid: { id: 'polaroid', name: 'Polaroid Style (88.9 × 108 mm)', w: 88.9, h: 108.0 },
+  a5: { id: 'a5', name: 'A5 Sheet (148 × 210 mm)', w: 148, h: 210 },
+  a6: { id: 'a6', name: 'A6 Sheet (105 × 148 mm)', w: 105, h: 148 },
+  original: { id: 'original', name: 'Original Resolution', w: null, h: null },
+  custom: { id: 'custom', name: 'Custom Size...', w: 210, h: 297 }
 };
 
 // Global Application State
@@ -97,6 +122,23 @@ const state = {
   // History stack for Photo Editor
   history: [],
   historyIndex: -1,
+
+  // Save & Export Photo Studio State (Supports any format & size)
+  exportState: {
+    target: 'photo', // 'photo' or 'sheet'
+    targetPhotoIdx: 0,
+    preset: 'full_a4',
+    customW: 210,
+    customH: 297,
+    lockAspect: true,
+    format: 'jpg', // 'jpg', 'png', 'pdf', 'webp'
+    dpi: 300,
+    quality: 95,
+    roundness: 0,
+    border: 'none',
+    fit: 'cover',
+    filename: 'Lemon_Photo.jpg'
+  },
 
   // Webcam stream
   cameraStream: null
@@ -950,6 +992,9 @@ function setupEventListeners() {
       if (state.activeTab === 'sheet') {
         clearSheetSelection();
       }
+    } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+      e.preventDefault();
+      openSavePhotoModal('photo', state.activePhotoIdx);
     } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'p') {
       e.preventDefault();
       handleDirectPrint();
@@ -995,12 +1040,64 @@ function setupEventListeners() {
   if (btnDirectSub) btnDirectSub.addEventListener('click', handleDirectPrint);
   const btnQuickPrint = document.getElementById('btnQuickPrintMenu');
   if (btnQuickPrint) btnQuickPrint.addEventListener('click', handleQuickPrint);
+
+  // Save & Export Studio Triggers
+  const btnOpenSave = document.getElementById('btnOpenSaveStudio');
+  if (btnOpenSave) btnOpenSave.addEventListener('click', (e) => { e.preventDefault(); openSavePhotoModal('photo'); });
+
   const btnExpSingle = document.getElementById('btnExportSingle');
-  if (btnExpSingle) btnExpSingle.addEventListener('click', handleExportSingle);
+  if (btnExpSingle) btnExpSingle.addEventListener('click', (e) => { e.preventDefault(); quickExportSingle('png'); });
+
+  const btnExpSingleJPG = document.getElementById('btnExportSingleJPG');
+  if (btnExpSingleJPG) btnExpSingleJPG.addEventListener('click', (e) => { e.preventDefault(); quickExportSingle('jpg'); });
+
+  const btnExpFullA4Quick = document.getElementById('btnExportFullA4Quick');
+  if (btnExpFullA4Quick) btnExpFullA4Quick.addEventListener('click', (e) => { e.preventDefault(); quickExportFullA4('jpg'); });
+
   const btnExpSheet = document.getElementById('btnExportSheetImg');
-  if (btnExpSheet) btnExpSheet.addEventListener('click', handleExportSheetImage);
+  if (btnExpSheet) btnExpSheet.addEventListener('click', (e) => { e.preventDefault(); handleExportSheetImage(); });
+
   const btnExpPDF = document.getElementById('btnExportPDF');
-  if (btnExpPDF) btnExpPDF.addEventListener('click', handleExportPDF);
+  if (btnExpPDF) btnExpPDF.addEventListener('click', (e) => { e.preventDefault(); handleExportPDF(); });
+
+  // Photo Editor Save Buttons
+  const btnSaveEd = document.getElementById('btnSaveEditedPhoto');
+  if (btnSaveEd) btnSaveEd.addEventListener('click', () => openSavePhotoModal('photo', state.activePhotoIdx));
+
+  const btnInspSave = document.getElementById('btnInspectorOpenSaveStudio');
+  if (btnInspSave) btnInspSave.addEventListener('click', () => openSavePhotoModal('photo', state.activePhotoIdx));
+
+  const btnQkA4 = document.getElementById('btnQuickExportA4');
+  if (btnQkA4) btnQkA4.addEventListener('click', () => quickExportFullA4('jpg'));
+
+  const btnQkPass = document.getElementById('btnQuickExportPassport');
+  if (btnQkPass) btnQkPass.addEventListener('click', () => quickExportSingle('jpg'));
+
+  const btnQk2x2 = document.getElementById('btnQuickExport2x2');
+  if (btnQk2x2) btnQk2x2.addEventListener('click', () => quickExportPreset('us_2x2', 'jpg'));
+
+  const btnQk4x6 = document.getElementById('btnQuickExport4x6');
+  if (btnQk4x6) btnQk4x6.addEventListener('click', () => quickExportPreset('photo_4x6', 'jpg'));
+
+  // Sheet Floating Menu & Inspector Section 0 Export triggers
+  const btnFloatExp = document.getElementById('btnFloatExportPhoto');
+  if (btnFloatExp) {
+    btnFloatExp.addEventListener('click', () => {
+      const it = state.sheetItems[state.selectedSheetItemIdx];
+      openSavePhotoModal('photo', it ? it.photoIdx : state.activePhotoIdx);
+    });
+  }
+
+  const btnExpSelFromInsp = document.getElementById('btnExportSelectedPhotoFromInspector');
+  if (btnExpSelFromInsp) {
+    btnExpSelFromInsp.addEventListener('click', () => {
+      const it = state.sheetItems[state.selectedSheetItemIdx];
+      openSavePhotoModal('photo', it ? it.photoIdx : state.activePhotoIdx);
+    });
+  }
+
+  // Setup Save & Export Modal Controls
+  setupSaveModalControls();
 }
 
 function setupAdjustmentSlider(sliderId, labelId, property, formatFn) {
@@ -2048,8 +2145,30 @@ function addPhotoCopyToSheet(photoIdx = state.activePhotoIdx) {
 
   state.sheetItems.push(newItem);
   state.selectedSheetItemIdx = state.sheetItems.length - 1;
+  state.selectedSheetItemIndices = [state.selectedSheetItemIdx];
+  updatePhotoQueueUI();
   renderSheet();
   updateFloatingMenu();
+}
+
+function removeOneCopyOfPhotoFromSheet(photoIdx) {
+  let foundIdx = -1;
+  for (let i = state.sheetItems.length - 1; i >= 0; i--) {
+    if (state.sheetItems[i].photoIdx === photoIdx) {
+      foundIdx = i;
+      break;
+    }
+  }
+  if (foundIdx >= 0) {
+    state.sheetItems.splice(foundIdx, 1);
+    if (state.selectedSheetItemIdx >= state.sheetItems.length) {
+      state.selectedSheetItemIdx = Math.max(0, state.sheetItems.length - 1);
+    }
+    state.selectedSheetItemIndices = [state.selectedSheetItemIdx];
+    updatePhotoQueueUI();
+    renderSheet();
+    updateFloatingMenu();
+  }
 }
 
 function duplicateCustomerPhoto(idx) {
@@ -2247,6 +2366,16 @@ function updatePhotoQueueUI() {
       openPhotoEditor(idx);
     });
 
+    // 💾 Save / Export Button
+    const btnSaveCard = document.createElement('button');
+    btnSaveCard.className = 'btn-card-edit';
+    btnSaveCard.innerHTML = `💾 Save`;
+    btnSaveCard.title = 'Save / Export this photo in any size or format (Full A4, Passport, 4x6, etc.)';
+    btnSaveCard.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openSavePhotoModal('photo', idx);
+    });
+
     // ⧉ Copy Button
     const btnCopy = document.createElement('button');
     btnCopy.className = 'btn-card-edit';
@@ -2257,15 +2386,41 @@ function updatePhotoQueueUI() {
       duplicateCustomerPhoto(idx);
     });
 
-    // ➕ Add to Page
-    const btnAdd = document.createElement('button');
-    btnAdd.className = 'btn-card-edit';
-    btnAdd.innerHTML = `➕ Page`;
-    btnAdd.title = 'Add copy onto A4 sheet';
-    btnAdd.addEventListener('click', (e) => {
+    // Copies on sheet counter (PakiPrint feature)
+    const countOnSheet = state.sheetItems.filter(si => si.photoIdx === idx).length;
+    const copiesControl = document.createElement('div');
+    copiesControl.className = 'photo-copies-control';
+    copiesControl.title = 'Number of copies of this photo placed on sheet';
+
+    const copiesLabel = document.createElement('span');
+    copiesLabel.textContent = 'Copies:';
+
+    const btnDec = document.createElement('button');
+    btnDec.className = 'btn-copies-qty';
+    btnDec.textContent = '−';
+    btnDec.title = 'Remove one copy from sheet';
+    btnDec.addEventListener('click', (e) => {
+      e.stopPropagation();
+      removeOneCopyOfPhotoFromSheet(idx);
+    });
+
+    const numSpan = document.createElement('span');
+    numSpan.className = 'copies-num';
+    numSpan.textContent = countOnSheet;
+
+    const btnInc = document.createElement('button');
+    btnInc.className = 'btn-copies-qty';
+    btnInc.textContent = '+';
+    btnInc.title = 'Add one copy to sheet';
+    btnInc.addEventListener('click', (e) => {
       e.stopPropagation();
       addPhotoCopyToSheet(idx);
     });
+
+    copiesControl.appendChild(copiesLabel);
+    copiesControl.appendChild(btnDec);
+    copiesControl.appendChild(numSpan);
+    copiesControl.appendChild(btnInc);
 
     const btnDelete = document.createElement('button');
     btnDelete.className = 'btn-card-delete';
@@ -2282,8 +2437,9 @@ function updatePhotoQueueUI() {
     });
 
     actions.appendChild(btnEdit);
+    actions.appendChild(btnSaveCard);
     actions.appendChild(btnCopy);
-    actions.appendChild(btnAdd);
+    actions.appendChild(copiesControl);
     actions.appendChild(btnDelete);
 
     info.appendChild(name);
@@ -3440,51 +3596,843 @@ function handleQuickPrint() {
   }
 }
 
-function handleExportSingle() {
-  const photo = getActivePhoto();
-  if (!photo) return;
+// ==========================================================================
+// MARK: - Save & Export Photo Studio Engine (Any Size, Any Format, PakiPrint features)
+// ==========================================================================
 
-  const dim = getPassportDimensionsMM();
-  const dpi = 300;
-  const pixelW = Math.round((dim.w / 25.4) * dpi);
-  const pixelH = Math.round((dim.h / 25.4) * dpi);
+function roundRect(ctx, x, y, w, h, r) {
+  r = Math.max(0, Math.min(r, w / 2, h / 2));
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y + w, x, y, r);
+  ctx.closePath();
+}
 
-  const offCanvas = document.createElement('canvas');
-  offCanvas.width = pixelW;
-  offCanvas.height = pixelH;
-  const ctx = offCanvas.getContext('2d');
+function showToast(message, duration = 3000) {
+  const toast = document.getElementById('toastNotification');
+  if (!toast) return;
+  toast.innerHTML = message;
+  toast.style.display = 'flex';
+  if (window._toastTimer) clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => {
+    toast.style.display = 'none';
+  }, duration);
+}
+
+// Native callback from Swift bridge
+window.onNativeSaveSuccess = function(savedPath) {
+  const filename = savedPath.split('/').pop();
+  showToast(`💾 Saved: <b>${filename}</b> to ${savedPath}`, 4000);
+};
+
+function setupSaveModalControls() {
+  const modal = document.getElementById('savePhotoModal');
+  const btnClose = document.getElementById('btnCloseSaveModal');
+  const btnCancel = document.getElementById('btnExportCancel');
+  if (btnClose) btnClose.addEventListener('click', closeSavePhotoModal);
+  if (btnCancel) btnCancel.addEventListener('click', closeSavePhotoModal);
+
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeSavePhotoModal();
+    });
+  }
+
+  // Target toggle (Photo vs Sheet)
+  const btnTargetPhoto = document.getElementById('btnExportTargetPhoto');
+  const btnTargetSheet = document.getElementById('btnExportTargetSheet');
+  if (btnTargetPhoto) {
+    btnTargetPhoto.addEventListener('click', () => {
+      state.exportState.target = 'photo';
+      updateExportUIAndPreview();
+    });
+  }
+  if (btnTargetSheet) {
+    btnTargetSheet.addEventListener('click', () => {
+      state.exportState.target = 'sheet';
+      updateExportUIAndPreview();
+    });
+  }
+
+  // Size chips
+  document.querySelectorAll('#exportSizeChipsContainer .export-chip').forEach(chip => {
+    chip.addEventListener('click', (e) => {
+      state.exportState.preset = e.currentTarget.dataset.preset;
+      updateExportUIAndPreview();
+    });
+  });
+
+  // Custom size inputs
+  const numW = document.getElementById('numExportW');
+  const numH = document.getElementById('numExportH');
+  const chkLock = document.getElementById('chkExportLockAspect');
+
+  if (numW) {
+    numW.addEventListener('input', (e) => {
+      const val = parseFloat(e.target.value) || 210;
+      if (state.exportState.lockAspect && state.exportState.customW > 0) {
+        const aspect = state.exportState.customH / state.exportState.customW;
+        state.exportState.customH = Math.round(val * aspect * 10) / 10;
+        if (numH) numH.value = state.exportState.customH;
+      }
+      state.exportState.customW = val;
+      updateExportUIAndPreview();
+    });
+  }
+
+  if (numH) {
+    numH.addEventListener('input', (e) => {
+      const val = parseFloat(e.target.value) || 297;
+      if (state.exportState.lockAspect && state.exportState.customH > 0) {
+        const aspect = state.exportState.customW / state.exportState.customH;
+        state.exportState.customW = Math.round(val * aspect * 10) / 10;
+        if (numW) numW.value = state.exportState.customW;
+      }
+      state.exportState.customH = val;
+      updateExportUIAndPreview();
+    });
+  }
+
+  if (chkLock) {
+    chkLock.addEventListener('change', (e) => {
+      state.exportState.lockAspect = e.target.checked;
+    });
+  }
+
+  // Format segments (JPG, PNG, PDF, WebP)
+  document.querySelectorAll('#exportFormatSegments .segment-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      state.exportState.format = e.currentTarget.dataset.format;
+      updateExportUIAndPreview();
+    });
+  });
+
+  // DPI select
+  const selDPI = document.getElementById('selExportDPI');
+  if (selDPI) {
+    selDPI.addEventListener('change', (e) => {
+      state.exportState.dpi = parseInt(e.target.value, 10) || 300;
+      updateExportUIAndPreview();
+    });
+  }
+
+  // Quality slider
+  const sliderQual = document.getElementById('sliderExportQuality');
+  if (sliderQual) {
+    sliderQual.addEventListener('input', (e) => {
+      state.exportState.quality = parseInt(e.target.value, 10) || 95;
+      updateExportUIAndPreview();
+    });
+  }
+
+  // Roundness slider & chips
+  const sliderRound = document.getElementById('sliderExportRoundness');
+  if (sliderRound) {
+    sliderRound.addEventListener('input', (e) => {
+      state.exportState.roundness = parseInt(e.target.value, 10) || 0;
+      updateExportUIAndPreview();
+    });
+  }
+
+  document.querySelectorAll('.chip-roundness').forEach(chip => {
+    chip.addEventListener('click', (e) => {
+      state.exportState.roundness = parseInt(e.currentTarget.dataset.round, 10) || 0;
+      updateExportUIAndPreview();
+    });
+  });
+
+  // Border select
+  const selBorder = document.getElementById('selExportBorder');
+  if (selBorder) {
+    selBorder.addEventListener('change', (e) => {
+      state.exportState.border = e.target.value;
+      updateExportUIAndPreview();
+    });
+  }
+
+  // Fit segments
+  document.querySelectorAll('#exportFitSegments .segment-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      state.exportState.fit = e.currentTarget.dataset.fit;
+      updateExportUIAndPreview();
+    });
+  });
+
+  // Action buttons
+  const btnSave = document.getElementById('btnExportSaveFile');
+  if (btnSave) btnSave.addEventListener('click', handlePerformSave);
+
+  const btnCopy = document.getElementById('btnExportCopyClipboard');
+  if (btnCopy) btnCopy.addEventListener('click', handlePerformCopyClipboard);
+
+  const btnAdd = document.getElementById('btnExportAddToStudio');
+  if (btnAdd) btnAdd.addEventListener('click', handlePerformAddToStudio);
+}
+
+function openSavePhotoModal(target = 'photo', photoIdx = null) {
+  state.exportState.target = target;
+  if (photoIdx !== null && photoIdx >= 0 && photoIdx < state.photos.length) {
+    state.exportState.targetPhotoIdx = photoIdx;
+  } else {
+    state.exportState.targetPhotoIdx = state.activePhotoIdx;
+  }
+
+  const photo = state.photos[state.exportState.targetPhotoIdx] || state.photos[0];
+  const safeName = (photo ? photo.name : 'Photo').replace(/[^a-zA-Z0-9_-]/g, '_');
+  state.exportState.filename = `Lemon_${safeName}_${state.exportState.preset}.${state.exportState.format}`;
+  const txtFn = document.getElementById('txtExportFilename');
+  if (txtFn) txtFn.value = state.exportState.filename;
+
+  const modal = document.getElementById('savePhotoModal');
+  if (modal) modal.style.display = 'flex';
+
+  updateExportUIAndPreview();
+}
+
+function closeSavePhotoModal() {
+  const modal = document.getElementById('savePhotoModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function updateExportUIAndPreview() {
+  const exp = state.exportState;
+  const isTargetSheet = exp.target === 'sheet';
+
+  // 1. Sync Target buttons
+  const btnTargetPhoto = document.getElementById('btnExportTargetPhoto');
+  const btnTargetSheet = document.getElementById('btnExportTargetSheet');
+  if (btnTargetPhoto) btnTargetPhoto.classList.toggle('active', !isTargetSheet);
+  if (btnTargetSheet) btnTargetSheet.classList.toggle('active', isTargetSheet);
+
+  const sizeGroup = document.getElementById('exportSizeGroup');
+  if (sizeGroup) sizeGroup.style.display = isTargetSheet ? 'none' : 'flex';
+  const finishingGroup = document.getElementById('exportFinishingGroup');
+  if (finishingGroup) finishingGroup.style.display = isTargetSheet ? 'none' : 'flex';
+
+  // 2. Sync Size Chips
+  document.querySelectorAll('#exportSizeChipsContainer .export-chip').forEach(chip => {
+    chip.classList.toggle('active', chip.dataset.preset === exp.preset);
+  });
+  const customRow = document.getElementById('exportCustomSizeRow');
+  if (customRow) customRow.style.display = exp.preset === 'custom' ? 'flex' : 'none';
+
+  // 3. Sync Format segments
+  document.querySelectorAll('#exportFormatSegments .segment-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.format === exp.format);
+  });
+
+  const qualityRow = document.getElementById('exportQualityRow');
+  if (qualityRow) {
+    qualityRow.style.display = (exp.format === 'jpg' || exp.format === 'webp') ? 'flex' : 'none';
+  }
+  const sliderQual = document.getElementById('sliderExportQuality');
+  if (sliderQual) sliderQual.value = exp.quality;
+  const lblQual = document.getElementById('lblExportQualityVal');
+  if (lblQual) lblQual.textContent = `${exp.quality}% (${exp.quality >= 95 ? 'Studio Max' : (exp.quality >= 85 ? 'High Quality' : 'Standard')})`;
+
+  // 4. Sync DPI
+  const selDPI = document.getElementById('selExportDPI');
+  if (selDPI) selDPI.value = exp.dpi;
+
+  // 5. Sync Roundness & Borders
+  const sliderRound = document.getElementById('sliderExportRoundness');
+  if (sliderRound) sliderRound.value = exp.roundness;
+  const lblRound = document.getElementById('lblExportRoundnessVal');
+  if (lblRound) lblRound.textContent = `${exp.roundness}% (${exp.roundness === 0 ? 'Square' : (exp.roundness === 100 ? 'Circle / Oval' : 'Rounded')})`;
+  document.querySelectorAll('.chip-roundness').forEach(chip => {
+    chip.classList.toggle('active', parseInt(chip.dataset.round, 10) === exp.roundness);
+  });
+
+  const selBorder = document.getElementById('selExportBorder');
+  if (selBorder) selBorder.value = exp.border;
+
+  document.querySelectorAll('#exportFitSegments .segment-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.fit === exp.fit);
+  });
+
+  // Calculate Dimensions
+  let widthMM, heightMM;
+  const photo = state.photos[exp.targetPhotoIdx] || state.photos[0];
+
+  if (isTargetSheet) {
+    const paperMM = getPaperDimensionsMM();
+    widthMM = paperMM.w;
+    heightMM = paperMM.h;
+  } else {
+    if (exp.preset === 'original') {
+      const src = (photo ? getAdjustedCanvas(photo) : null) || (photo ? photo.img : null);
+      const nw = src ? (src.width || photo.img.naturalWidth || 900) : 900;
+      const nh = src ? (src.height || photo.img.naturalHeight || 1100) : 1100;
+      widthMM = (nw / exp.dpi) * 25.4;
+      heightMM = (nh / exp.dpi) * 25.4;
+    } else if (exp.preset === 'custom') {
+      widthMM = exp.customW || 210;
+      heightMM = exp.customH || 297;
+    } else {
+      const p = EXPORT_SIZE_PRESETS[exp.preset] || EXPORT_SIZE_PRESETS.full_a4;
+      widthMM = p.w;
+      heightMM = p.h;
+    }
+  }
+
+  const dpi = exp.dpi || 300;
+  const pixelW = Math.round((widthMM / 25.4) * dpi);
+  const pixelH = Math.round((heightMM / 25.4) * dpi);
+
+  // Sync filename extension
+  const txtFn = document.getElementById('txtExportFilename');
+  if (txtFn) {
+    const parts = txtFn.value.split('.');
+    if (parts.length > 1) parts.pop();
+    txtFn.value = `${parts.join('.')}.${exp.format === 'pdf' ? 'pdf' : (exp.format === 'png' ? 'png' : (exp.format === 'webp' ? 'webp' : 'jpg'))}`;
+    exp.filename = txtFn.value;
+  }
+
+  // Generate thumbnail preview on exportPreviewCanvas
+  const previewCanvas = document.getElementById('exportPreviewCanvas');
+  if (previewCanvas && (photo || isTargetSheet)) {
+    const boxW = 280;
+    const boxH = 260;
+    const aspect = widthMM / heightMM;
+    let pw = boxW;
+    let ph = pw / aspect;
+    if (ph > boxH) {
+      ph = boxH;
+      pw = ph * aspect;
+    }
+    const dpr = window.devicePixelRatio || 2;
+    previewCanvas.width = Math.round(pw * dpr);
+    previewCanvas.height = Math.round(ph * dpr);
+    previewCanvas.style.width = `${Math.round(pw)}px`;
+    previewCanvas.style.height = `${Math.round(ph)}px`;
+
+    const pctx = previewCanvas.getContext('2d');
+    pctx.save();
+    pctx.scale(dpr, dpr);
+
+    if (isTargetSheet) {
+      const baseSheet = generateSheet300DPICanvas();
+      pctx.drawImage(baseSheet.canvas, 0, 0, pw, ph);
+    } else if (photo) {
+      pctx.fillStyle = '#FFFFFF';
+      pctx.fillRect(0, 0, pw, ph);
+
+      let inX = 0, inY = 0, inW = pw, inH = ph;
+      const scaleMM = pw / widthMM;
+
+      if (exp.border === 'thinWhite') {
+        const b = 1.0 * scaleMM;
+        inX = b; inY = b; inW = pw - b * 2; inH = ph - b * 2;
+      } else if (exp.border === 'thickWhite') {
+        const b = 2.5 * scaleMM;
+        inX = b; inY = b; inW = pw - b * 2; inH = ph - b * 2;
+      } else if (exp.border === 'polaroid') {
+        const b = 5.0 * scaleMM;
+        const bBottom = 18.0 * scaleMM;
+        inX = b; inY = b; inW = pw - b * 2; inH = ph - b * 2 - (bBottom - b);
+      } else if (exp.border === 'thinBlack') {
+        const b = 0.5 * scaleMM;
+        inX = b; inY = b; inW = pw - b * 2; inH = ph - b * 2;
+        pctx.fillStyle = '#000000';
+        pctx.fillRect(0, 0, pw, ph);
+        pctx.fillStyle = '#FFFFFF';
+        pctx.fillRect(inX, inY, inW, inH);
+      }
+
+      pctx.save();
+      const r = (exp.roundness / 100) * (Math.min(inW, inH) / 2);
+      if (r > 0) {
+        roundRect(pctx, inX, inY, inW, inH, r);
+        pctx.clip();
+      }
+
+      if (exp.fit === 'contain') {
+        const src = getAdjustedCanvas(photo) || photo.img;
+        const nw = src ? (src.width || photo.img.naturalWidth || 1) : 1;
+        const nh = src ? (src.height || photo.img.naturalHeight || 1) : 1;
+        const imgAsp = nw / nh;
+        let tw = inW;
+        let th = tw / imgAsp;
+        if (th > inH) {
+          th = inH;
+          tw = th * imgAsp;
+        }
+        const dx = inX + (inW - tw) / 2;
+        const dy = inY + (inH - th) / 2;
+        drawAdjustedPhoto(pctx, photo, dx, dy, tw, th);
+      } else {
+        drawAdjustedPhoto(pctx, photo, inX, inY, inW, inH);
+      }
+      pctx.restore();
+
+      if (exp.border === 'thinBlack') {
+        pctx.strokeStyle = '#000000';
+        pctx.lineWidth = 1;
+        if (r > 0) {
+          roundRect(pctx, inX, inY, inW, inH, r);
+          pctx.stroke();
+        } else {
+          pctx.strokeRect(inX, inY, inW, inH);
+        }
+      }
+    }
+    pctx.restore();
+  }
+
+  // Update Stats card
+  document.getElementById('exportStatResolution').textContent = `${pixelW} × ${pixelH} px`;
+  document.getElementById('exportStatPhysical').textContent = `${widthMM.toFixed(1)} × ${heightMM.toFixed(1)} mm (${(widthMM / 25.4).toFixed(1)} × ${(heightMM / 25.4).toFixed(1)} in)`;
+  document.getElementById('exportStatDPI').textContent = `${dpi} DPI • ${dpi >= 600 ? 'Ultra HD' : 'Studio Print'}`;
+
+  let estBytes = (pixelW * pixelH * 3);
+  if (exp.format === 'jpg' || exp.format === 'pdf') {
+    estBytes = estBytes * 0.12 * (exp.quality / 90);
+  } else if (exp.format === 'webp') {
+    estBytes = estBytes * 0.08 * (exp.quality / 90);
+  } else {
+    estBytes = estBytes * 0.45;
+  }
+  const estMB = (estBytes / (1024 * 1024)).toFixed(1);
+  document.getElementById('exportStatSize').textContent = `${exp.format.toUpperCase()} • ~${estMB > 0.1 ? estMB + ' MB' : Math.round(estBytes / 1024) + ' KB'}`;
+}
+
+function generateExportPhotoCanvas(photo, options) {
+  const dpi = options.dpi || 300;
+  const pixelW = Math.round((options.widthMM / 25.4) * dpi);
+  const pixelH = Math.round((options.heightMM / 25.4) * dpi);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = pixelW;
+  canvas.height = pixelH;
+  const ctx = canvas.getContext('2d');
 
   ctx.fillStyle = '#FFFFFF';
   ctx.fillRect(0, 0, pixelW, pixelH);
-  drawAdjustedPhoto(ctx, photo, 0, 0, pixelW, pixelH);
 
-  downloadCanvas(offCanvas, `${photo.name}_passport_300dpi.png`);
+  let innerX = 0;
+  let innerY = 0;
+  let innerW = pixelW;
+  let innerH = pixelH;
+
+  const mmToPx = dpi / 25.4;
+
+  if (options.border === 'thinWhite') {
+    const bPx = Math.round(1.0 * mmToPx);
+    innerX = bPx; innerY = bPx; innerW = pixelW - bPx * 2; innerH = pixelH - bPx * 2;
+  } else if (options.border === 'thickWhite') {
+    const bPx = Math.round(2.5 * mmToPx);
+    innerX = bPx; innerY = bPx; innerW = pixelW - bPx * 2; innerH = pixelH - bPx * 2;
+  } else if (options.border === 'polaroid') {
+    const bPx = Math.round(5.0 * mmToPx);
+    const bBottomPx = Math.round(18.0 * mmToPx);
+    innerX = bPx; innerY = bPx; innerW = pixelW - bPx * 2; innerH = pixelH - bPx * 2 - (bBottomPx - bPx);
+  } else if (options.border === 'thinBlack') {
+    const bPx = Math.round(0.5 * mmToPx);
+    innerX = bPx; innerY = bPx; innerW = pixelW - bPx * 2; innerH = pixelH - bPx * 2;
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, pixelW, pixelH);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(innerX, innerY, innerW, innerH);
+  }
+
+  ctx.save();
+  const radiusPx = ((options.roundness || 0) / 100) * (Math.min(innerW, innerH) / 2);
+  if (radiusPx > 0) {
+    roundRect(ctx, innerX, innerY, innerW, innerH, radiusPx);
+    ctx.clip();
+  }
+
+  if (options.fit === 'contain') {
+    const adjustedSrc = getAdjustedCanvas(photo) || photo.img;
+    const natW = adjustedSrc ? (adjustedSrc.width || photo.img.naturalWidth || 1) : 1;
+    const natH = adjustedSrc ? (adjustedSrc.height || photo.img.naturalHeight || 1) : 1;
+    const imgAspect = natW / natH;
+    const frameAspect = innerW / innerH;
+    let targetW = innerW;
+    let targetH = innerH;
+    if (imgAspect > frameAspect) {
+      targetH = targetW / imgAspect;
+    } else {
+      targetW = targetH * imgAspect;
+    }
+    const drawX = innerX + (innerW - targetW) / 2;
+    const drawY = innerY + (innerH - targetH) / 2;
+    drawAdjustedPhoto(ctx, photo, drawX, drawY, targetW, targetH);
+  } else {
+    drawAdjustedPhoto(ctx, photo, innerX, innerY, innerW, innerH);
+  }
+  ctx.restore();
+
+  if (options.border === 'thinBlack') {
+    ctx.save();
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = Math.max(1, Math.round(0.5 * mmToPx));
+    if (radiusPx > 0) {
+      roundRect(ctx, innerX, innerY, innerW, innerH, radiusPx);
+      ctx.stroke();
+    } else {
+      ctx.strokeRect(innerX, innerY, innerW, innerH);
+    }
+    ctx.restore();
+  }
+
+  return canvas;
+}
+
+function generateExportSheetCanvas(options) {
+  const baseRes = generateSheet300DPICanvas();
+  const dpi = options.dpi || 300;
+  if (dpi === 300) return baseRes.canvas;
+
+  const paperMM = getPaperDimensionsMM();
+  const pixelW = Math.round((paperMM.w / 25.4) * dpi);
+  const pixelH = Math.round((paperMM.h / 25.4) * dpi);
+
+  const scaledCanvas = document.createElement('canvas');
+  scaledCanvas.width = pixelW;
+  scaledCanvas.height = pixelH;
+  const ctx = scaledCanvas.getContext('2d');
+  ctx.drawImage(baseRes.canvas, 0, 0, pixelW, pixelH);
+  return scaledCanvas;
+}
+
+function createSingleImagePDFBlob(jpegUint8Array, widthPx, heightPx, widthMM, heightMM) {
+  const ptW = (widthMM * 72 / 25.4).toFixed(2);
+  const ptH = (heightMM * 72 / 25.4).toFixed(2);
+  const contentStream = `q ${ptW} 0 0 ${ptH} 0 0 cm /Im0 Do Q`;
+  const enc = new TextEncoder();
+  const contentBytes = enc.encode(contentStream);
+
+  let offset = 0;
+  const offsets = [];
+  const parts = [];
+
+  function addPart(data) {
+    let bytes;
+    if (typeof data === 'string') {
+      bytes = enc.encode(data);
+    } else if (data instanceof Uint8Array) {
+      bytes = data;
+    } else if (data instanceof ArrayBuffer) {
+      bytes = new Uint8Array(data);
+    }
+    parts.push(bytes);
+    offset += bytes.length;
+  }
+
+  addPart('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
+  offsets[1] = offset; addPart('1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n');
+  offsets[2] = offset; addPart('2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n');
+  offsets[3] = offset; addPart(`3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${ptW} ${ptH}] /Resources << /XObject << /Im0 4 0 R >> /ProcSet [/PDF /ImageC] >> /Contents 5 0 R >>\nendobj\n`);
+  offsets[4] = offset; addPart(`4 0 obj\n<< /Type /XObject /Subtype /Image /Width ${widthPx} /Height ${heightPx} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpegUint8Array.length} >>\nstream\n`);
+  addPart(jpegUint8Array); addPart('\nendstream\nendobj\n');
+  offsets[5] = offset; addPart(`5 0 obj\n<< /Length ${contentBytes.length} >>\nstream\n`); addPart(contentBytes); addPart('\nendstream\nendobj\n');
+  const xrefOffset = offset;
+  let xref = `xref\n0 6\n0000000000 65535 f \n`;
+  for (let i = 1; i <= 5; i++) { xref += String(offsets[i]).padStart(10, '0') + ' 00000 n \n'; }
+  xref += `trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
+  addPart(xref);
+
+  return new Blob(parts, { type: 'application/pdf' });
+}
+
+function saveBlobToFile(blob, filename) {
+  if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.nativeSaveFile) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataURL = reader.result;
+      window.webkit.messageHandlers.nativeSaveFile.postMessage({
+        dataURL: dataURL,
+        filename: filename
+      });
+    };
+    reader.readAsDataURL(blob);
+    return;
+  }
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+function handlePerformSave() {
+  const exp = state.exportState;
+  const isTargetSheet = exp.target === 'sheet';
+  const photo = state.photos[exp.targetPhotoIdx] || state.photos[0];
+  if (!photo && !isTargetSheet) return;
+
+  const btnSave = document.getElementById('btnExportSaveFile');
+  if (btnSave) {
+    btnSave.disabled = true;
+    btnSave.innerHTML = `⏳ Generating ${exp.format.toUpperCase()}...`;
+  }
+
+  setTimeout(() => {
+    try {
+      let widthMM, heightMM;
+      if (isTargetSheet) {
+        const paperMM = getPaperDimensionsMM();
+        widthMM = paperMM.w;
+        heightMM = paperMM.h;
+      } else {
+        if (exp.preset === 'original') {
+          const src = (photo ? getAdjustedCanvas(photo) : null) || (photo ? photo.img : null);
+          const nw = src ? (src.width || photo.img.naturalWidth || 900) : 900;
+          const nh = src ? (src.height || photo.img.naturalHeight || 1100) : 1100;
+          widthMM = (nw / exp.dpi) * 25.4;
+          heightMM = (nh / exp.dpi) * 25.4;
+        } else if (exp.preset === 'custom') {
+          widthMM = exp.customW || 210;
+          heightMM = exp.customH || 297;
+        } else {
+          const p = EXPORT_SIZE_PRESETS[exp.preset] || EXPORT_SIZE_PRESETS.full_a4;
+          widthMM = p.w;
+          heightMM = p.h;
+        }
+      }
+
+      const canvas = isTargetSheet ? generateExportSheetCanvas(exp) : generateExportPhotoCanvas(photo, {
+        widthMM: widthMM,
+        heightMM: heightMM,
+        dpi: exp.dpi,
+        roundness: exp.roundness,
+        border: exp.border,
+        fit: exp.fit
+      });
+
+      const filename = document.getElementById('txtExportFilename')?.value || exp.filename || `Lemon_Photo.${exp.format}`;
+
+      if (exp.format === 'pdf') {
+        canvas.toBlob((jpegBlob) => {
+          if (!jpegBlob) return;
+          const reader = new FileReader();
+          reader.onload = () => {
+            const uint8 = new Uint8Array(reader.result);
+            const pdfBlob = createSingleImagePDFBlob(uint8, canvas.width, canvas.height, widthMM, heightMM);
+            saveBlobToFile(pdfBlob, filename);
+            closeSavePhotoModal();
+            showToast(`💾 Exported: <b>${filename}</b> (${Math.round(widthMM)}×${Math.round(heightMM)} mm PDF)`);
+            if (btnSave) {
+              btnSave.disabled = false;
+              btnSave.innerHTML = `💾 Save / Download to Mac <span class="kbd-shortcut">⌘S</span>`;
+            }
+          };
+          reader.readAsArrayBuffer(jpegBlob);
+        }, 'image/jpeg', Math.min(1.0, Math.max(0.7, exp.quality / 100)));
+      } else {
+        const mime = exp.format === 'png' ? 'image/png' : (exp.format === 'webp' ? 'image/webp' : 'image/jpeg');
+        const qual = (exp.format === 'png') ? undefined : Math.min(1.0, Math.max(0.7, exp.quality / 100));
+
+        canvas.toBlob((blob) => {
+          if (!blob) return;
+          saveBlobToFile(blob, filename);
+          closeSavePhotoModal();
+          showToast(`💾 Exported: <b>${filename}</b> (${canvas.width}×${canvas.height} px)`);
+          if (btnSave) {
+            btnSave.disabled = false;
+            btnSave.innerHTML = `💾 Save / Download to Mac <span class="kbd-shortcut">⌘S</span>`;
+          }
+        }, mime, qual);
+      }
+    } catch (err) {
+      console.error(err);
+      alert(`Save error: ${err.message}`);
+      if (btnSave) {
+        btnSave.disabled = false;
+        btnSave.innerHTML = `💾 Save / Download to Mac <span class="kbd-shortcut">⌘S</span>`;
+      }
+    }
+  }, 50);
+}
+
+function handlePerformCopyClipboard() {
+  const exp = state.exportState;
+  const isTargetSheet = exp.target === 'sheet';
+  const photo = state.photos[exp.targetPhotoIdx] || state.photos[0];
+  if (!photo && !isTargetSheet) return;
+
+  let widthMM, heightMM;
+  if (isTargetSheet) {
+    const paperMM = getPaperDimensionsMM();
+    widthMM = paperMM.w;
+    heightMM = paperMM.h;
+  } else {
+    if (exp.preset === 'original') {
+      const src = (photo ? getAdjustedCanvas(photo) : null) || (photo ? photo.img : null);
+      const nw = src ? (src.width || photo.img.naturalWidth || 900) : 900;
+      const nh = src ? (src.height || photo.img.naturalHeight || 1100) : 1100;
+      widthMM = (nw / exp.dpi) * 25.4;
+      heightMM = (nh / exp.dpi) * 25.4;
+    } else if (exp.preset === 'custom') {
+      widthMM = exp.customW || 210;
+      heightMM = exp.customH || 297;
+    } else {
+      const p = EXPORT_SIZE_PRESETS[exp.preset] || EXPORT_SIZE_PRESETS.full_a4;
+      widthMM = p.w;
+      heightMM = p.h;
+    }
+  }
+
+  const canvas = isTargetSheet ? generateExportSheetCanvas(exp) : generateExportPhotoCanvas(photo, {
+    widthMM: widthMM,
+    heightMM: heightMM,
+    dpi: exp.dpi,
+    roundness: exp.roundness,
+    border: exp.border,
+    fit: exp.fit
+  });
+
+  copyCanvasToClipboard(canvas);
+}
+
+function copyCanvasToClipboard(canvas) {
+  const dataURL = canvas.toDataURL('image/png');
+  if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.nativeCopyToClipboard) {
+    window.webkit.messageHandlers.nativeCopyToClipboard.postMessage({ dataURL: dataURL });
+    showToast('📋 High-resolution image copied to clipboard!');
+    return;
+  }
+  if (navigator.clipboard && window.ClipboardItem) {
+    canvas.toBlob((blob) => {
+      navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]).then(() => {
+        showToast('📋 Image copied to clipboard!');
+      }).catch(err => {
+        console.error(err);
+        showToast('Clipboard access restricted');
+      });
+    }, 'image/png');
+  } else {
+    showToast('Clipboard copy not supported in this environment');
+  }
+}
+
+function handlePerformAddToStudio() {
+  const exp = state.exportState;
+  const photo = state.photos[exp.targetPhotoIdx] || state.photos[0];
+  if (!photo) return;
+
+  const p = EXPORT_SIZE_PRESETS[exp.preset] || EXPORT_SIZE_PRESETS.full_a4;
+  const widthMM = p.w || exp.customW || 210;
+  const heightMM = p.h || exp.customH || 297;
+
+  const canvas = generateExportPhotoCanvas(photo, {
+    widthMM: widthMM,
+    heightMM: heightMM,
+    dpi: 300,
+    roundness: exp.roundness,
+    border: exp.border,
+    fit: exp.fit
+  });
+
+  const newImg = new Image();
+  newImg.onload = () => {
+    const newName = `${photo.name} (${p.name.split(' ')[0]})`;
+    addCustomerPhotoItem(newName, newImg, true);
+    showToast(`➕ Added <b>${newName}</b> to Customer Photos!`);
+    closeSavePhotoModal();
+  };
+  newImg.src = canvas.toDataURL('image/png');
+}
+
+function quickExportSingle(format = 'png') {
+  const photo = getActivePhoto();
+  if (!photo) return;
+  const dim = getPassportDimensionsMM();
+  const dpi = 300;
+  const canvas = generateExportPhotoCanvas(photo, {
+    widthMM: dim.w,
+    heightMM: dim.h,
+    dpi: dpi,
+    roundness: 0,
+    border: photo.borderStyle || 'none',
+    fit: 'cover'
+  });
+  const ext = format === 'jpg' ? 'jpg' : 'png';
+  const filename = `${photo.name.replace(/[^a-zA-Z0-9_-]/g, '_')}_${Math.round(dim.w)}x${Math.round(dim.h)}mm_300dpi.${ext}`;
+  canvas.toBlob((blob) => {
+    saveBlobToFile(blob, filename);
+    showToast(`🖼️ Saved <b>${filename}</b> (${Math.round(dim.w)}×${Math.round(dim.h)} mm)`);
+  }, format === 'jpg' ? 'image/jpeg' : 'image/png', 0.95);
+}
+
+function quickExportFullA4(format = 'jpg') {
+  const photo = getActivePhoto();
+  if (!photo) return;
+  const canvas = generateExportPhotoCanvas(photo, {
+    widthMM: 210,
+    heightMM: 297,
+    dpi: 300,
+    roundness: 0,
+    border: 'none',
+    fit: 'cover'
+  });
+  const filename = `${photo.name.replace(/[^a-zA-Z0-9_-]/g, '_')}_FullA4_300dpi.${format}`;
+  canvas.toBlob((blob) => {
+    saveBlobToFile(blob, filename);
+    showToast(`🖼️ Saved Full A4: <b>${filename}</b> (210 × 297 mm, 300 DPI)`);
+  }, format === 'png' ? 'image/png' : 'image/jpeg', 0.95);
+}
+
+function quickExportPreset(presetKey, format = 'jpg') {
+  const photo = getActivePhoto();
+  if (!photo) return;
+  const p = EXPORT_SIZE_PRESETS[presetKey] || EXPORT_SIZE_PRESETS.passport;
+  const canvas = generateExportPhotoCanvas(photo, {
+    widthMM: p.w,
+    heightMM: p.h,
+    dpi: 300,
+    roundness: 0,
+    border: 'none',
+    fit: 'cover'
+  });
+  const filename = `${photo.name.replace(/[^a-zA-Z0-9_-]/g, '_')}_${p.name.split(' ')[0]}_300dpi.${format}`;
+  canvas.toBlob((blob) => {
+    saveBlobToFile(blob, filename);
+    showToast(`🖼️ Saved: <b>${filename}</b> (${p.name})`);
+  }, format === 'png' ? 'image/png' : 'image/jpeg', 0.95);
+}
+
+function handleExportSingle() {
+  quickExportSingle('png');
 }
 
 function handleExportSheetImage() {
   const { canvas } = generateSheet300DPICanvas();
-  downloadCanvas(canvas, `Lemon_PassportSheet_${state.sheetItems.length}_on_${PAPER_PRESETS[state.paperSize].name.split(' ')[0]}_300dpi.png`);
+  const filename = `Lemon_PassportSheet_${state.sheetItems.length}_on_${PAPER_PRESETS[state.paperSize].name.split(' ')[0]}_300dpi.png`;
+  downloadCanvas(canvas, filename);
 }
 
 function handleExportPDF() {
   if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.nativeSavePDF) {
     window.webkit.messageHandlers.nativeSavePDF.postMessage({});
   } else {
-    alert("Tip: In the macOS Print dialog, click the 'PDF' button at the bottom-left to save as a high-resolution PDF!");
-    handleDirectPrint();
+    // Generate high-resolution PDF directly from sheet
+    const paperMM = getPaperDimensionsMM();
+    const { canvas } = generateSheet300DPICanvas();
+    canvas.toBlob((jpegBlob) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const uint8 = new Uint8Array(reader.result);
+        const pdfBlob = createSingleImagePDFBlob(uint8, canvas.width, canvas.height, paperMM.w, paperMM.h);
+        saveBlobToFile(pdfBlob, `Lemon_Sheet_${state.sheetItems.length}_Photos_${PAPER_PRESETS[state.paperSize].name.split(' ')[0]}.pdf`);
+        showToast('📄 Exported Sheet as PDF (300 DPI)');
+      };
+      reader.readAsArrayBuffer(jpegBlob);
+    }, 'image/jpeg', 0.98);
   }
 }
 
 function downloadCanvas(canvas, filename) {
   canvas.toBlob((blob) => {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    saveBlobToFile(blob, filename);
   }, 'image/png');
 }
 

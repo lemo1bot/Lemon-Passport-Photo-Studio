@@ -1,5 +1,6 @@
 import AppKit
 import WebKit
+import UniformTypeIdentifiers
 
 class DirectPrintSheetView: NSView {
     let image: NSImage
@@ -177,6 +178,69 @@ class BridgeHandler: NSObject, WKScriptMessageHandler {
                     }
                 }
             }
+        } else if message.name == "nativeSaveFile" {
+            guard let dict = message.body as? [String: Any],
+                  let base64String = dict["dataURL"] as? String else { return }
+
+            let filename = dict["filename"] as? String ?? "photo.jpg"
+            let ext = (filename as NSString).pathExtension.lowercased()
+
+            var cleanBase64 = base64String
+            if let commaIdx = cleanBase64.firstIndex(of: ",") {
+                cleanBase64 = String(cleanBase64[cleanBase64.index(after: commaIdx)...])
+            }
+
+            guard let data = Data(base64Encoded: cleanBase64) else { return }
+
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else { return }
+                let savePanel = NSSavePanel()
+                savePanel.title = "Save Photo"
+                savePanel.prompt = "Save"
+                savePanel.nameFieldStringValue = filename
+                if !ext.isEmpty {
+                    if #available(macOS 11.0, *) {
+                        if let utType = UTType(filenameExtension: ext) {
+                            savePanel.allowedContentTypes = [utType]
+                        }
+                    } else {
+                        savePanel.allowedFileTypes = [ext]
+                    }
+                }
+
+                let targetWindow = self.window ?? NSApp.keyWindow
+                let completion: (NSApplication.ModalResponse) -> Void = { response in
+                    if response == .OK, let url = savePanel.url {
+                        do {
+                            try data.write(to: url)
+                            let escapedPath = url.path.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"")
+                            self.webView?.evaluateJavaScript("if (window.onNativeSaveSuccess) window.onNativeSaveSuccess(\"\(escapedPath)\");", completionHandler: nil)
+                        } catch {
+                            print("Save error: \(error)")
+                        }
+                    }
+                }
+
+                if let win = targetWindow {
+                    savePanel.beginSheetModal(for: win, completionHandler: completion)
+                } else {
+                    savePanel.begin(completionHandler: completion)
+                }
+            }
+        } else if message.name == "nativeCopyToClipboard" {
+            guard let dict = message.body as? [String: Any],
+                  let base64String = dict["dataURL"] as? String else { return }
+            var cleanBase64 = base64String
+            if let commaIdx = cleanBase64.firstIndex(of: ",") {
+                cleanBase64 = String(cleanBase64[cleanBase64.index(after: commaIdx)...])
+            }
+            guard let data = Data(base64Encoded: cleanBase64),
+                  let image = NSImage(data: data) else { return }
+            DispatchQueue.main.async {
+                let pasteboard = NSPasteboard.general
+                pasteboard.clearContents()
+                pasteboard.writeObjects([image])
+            }
         }
     }
 
@@ -214,6 +278,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, WKUIDelegate {
         contentController.add(bridge, name: "nativeDirectPrint")
         contentController.add(bridge, name: "nativeQuickPrint")
         contentController.add(bridge, name: "nativeSavePDF")
+        contentController.add(bridge, name: "nativeSaveFile")
+        contentController.add(bridge, name: "nativeCopyToClipboard")
         config.userContentController = contentController
         config.preferences.setValue(true, forKey: "developerExtrasEnabled")
         config.preferences.setValue(true, forKey: "allowFileAccessFromFileURLs")

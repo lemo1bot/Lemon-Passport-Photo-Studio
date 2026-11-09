@@ -49,9 +49,9 @@ cat << EOF > "${APP_BUNDLE}/Contents/Info.plist"
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.2.0</string>
+    <string>1.3.0</string>
     <key>CFBundleVersion</key>
-    <string>3</string>
+    <string>4</string>
     <key>LSMinimumSystemVersion</key>
     <string>13.0</string>
     <key>NSHighResolutionCapable</key>
@@ -95,6 +95,15 @@ DIRECT PRINTING:
 • "Quick Print" (Cmd+Shift+P) sends directly to your default printer with 1 click.
 
 TOP FEATURES:
+• "Save & Export Photo Studio" (Any Size & Any Format):
+  - Save active edited photo or full print sheet
+  - Output Sizes: Full A4 (210×297mm), Passport (35×45mm), US 2×2" (51×51mm), 1×1", 4×6" (4R), 5×7" (5R), 3.5×5" (3R), Wallet (64×89mm), Polaroid Style (89×108mm), A5, A6, Custom mm
+  - Formats: High-Res JPG (Quality 70-100%), Lossless PNG, Vector-scaled PDF, WebP
+  - Resolutions: 300 DPI Studio Standard, 600 DPI Ultra HD Lab Print, 150 DPI / 72 DPI
+  - PakiPrint Features: Corner Roundness (0% Square to 100% Circle/Capsule), Photo Borders (Thin White, Polaroid Frame, Black), Fit Modes (Cover / Contain)
+  - Copy directly to macOS Clipboard with 1 click
+• Customer Photo Copies Counter:
+  - Intuitive [- 1 +] copies stepper for each customer photo in the studio
 • "1 Photo Full A4" Single Photo Printing:
   - 1-Click "🖼️ 1 Photo Full A4" Quick Preset
   - Fit to Page (Proportional, No Crop), Margins (10mm for Inkjet Trays), Borderless Fill (210×297mm)
@@ -111,7 +120,6 @@ TOP FEATURES:
 • AI Auto-Align Face & AI Pure White Background (#FFFFFF)
 • Corner Crop Marks & Dashed Cutting Lines for easy scissors/trimmer cutting
 • 50 mm Physical Scale Ruler to verify print accuracy
-• 300 DPI High-Resolution Export to PDF and PNG
 EOF
 
 # Set custom volume icon on the DMG volume
@@ -140,12 +148,12 @@ if let img = NSImage(contentsOfFile: icns) {
 }
 '
 
-# Create versioned copy Lemon-v1.2.0.dmg
-echo "-> Creating versioned copy Lemon-v1.2.0.dmg..."
-cp -p "${DMG_PATH}" "${PROJECT_DIR}/Lemon-v1.2.0.dmg"
+# Create versioned copy Lemon-v1.3.0.dmg
+echo "-> Creating versioned copy Lemon-v1.3.0.dmg..."
+cp -p "${DMG_PATH}" "${PROJECT_DIR}/Lemon-v1.3.0.dmg"
 swift -e '
 import AppKit
-let dmg = "'"${PROJECT_DIR}"'/Lemon-v1.2.0.dmg"
+let dmg = "'"${PROJECT_DIR}"'/Lemon-v1.3.0.dmg"
 let icns = "'"${PROJECT_DIR}"'/Resources/AppIcon.icns"
 if let img = NSImage(contentsOfFile: icns) {
     _ = NSWorkspace.shared.setIcon(img, forFile: dmg, options: [])
@@ -155,7 +163,7 @@ if let img = NSImage(contentsOfFile: icns) {
 # Copy to Desktop
 echo "-> Copying DMGs to Desktop..."
 cp -p "${DMG_PATH}" "/Users/lemon/Desktop/Lemon.dmg"
-cp -p "${PROJECT_DIR}/Lemon-v1.2.0.dmg" "/Users/lemon/Desktop/Lemon-v1.2.0.dmg"
+cp -p "${PROJECT_DIR}/Lemon-v1.3.0.dmg" "/Users/lemon/Desktop/Lemon-v1.3.0.dmg"
 
 # 8. Install directly into /Applications
 echo "-> Installing to /Applications/${APP_NAME}.app..."

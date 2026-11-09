@@ -12,17 +12,63 @@
 
 Get the official disk image directly from GitHub Releases:
 
-* 👉 **[Download Lemon-v1.2.0.dmg (Versioned)](https://github.com/lemo1bot/Lemon-Passport-Photo-Studio/releases/download/v1.2.0/Lemon-v1.2.0.dmg)** *(Recommended)*
-* 👉 **[Download Lemon.dmg](https://github.com/lemo1bot/Lemon-Passport-Photo-Studio/releases/download/v1.2.0/Lemon.dmg)** *(Latest)*
+* 👉 **[Download Lemon-v1.3.0.dmg (Versioned)](https://github.com/lemo1bot/Lemon-Passport-Photo-Studio/releases/download/v1.3.0/Lemon-v1.3.0.dmg)** *(Recommended)*
+* 👉 **[Download Lemon.dmg](https://github.com/lemo1bot/Lemon-Passport-Photo-Studio/releases/download/v1.3.0/Lemon.dmg)** *(Latest)*
 
 ### Quick Installation:
-1. Open **`Lemon-v1.2.0.dmg`** (or **`Lemon.dmg`**).
+1. Open **`Lemon-v1.3.0.dmg`** (or **`Lemon.dmg`**).
 2. Drag **`Lemon.app`** into the **Applications** folder shortcut.
 3. Launch **Lemon** from Launchpad, Spotlight, or the Applications folder!
 
 ---
 
 ## ✨ Key Features
+
+### 💾 Save & Export Photo Studio (Any Size & Any Format)
+* **Save in Any Standard or Custom Size**:
+  * **🖼️ Full A4 Single Photo**: $210 \times 297\text{ mm}$ ($2480 \times 3508\text{ px}$ at 300 DPI, or $4960 \times 7016\text{ px}$ at 600 DPI) for high-end studio portraits and framing.
+  * **🪪 Standard Passport**: $35 \times 45\text{ mm}$ (UK, Schengen, India, Australia, Singapore, Europe).
+  * **🇺🇸 US Visa / Passport**: $50.8 \times 50.8\text{ mm}$ ($2 \times 2\text{ inches}$).
+  * **🏷️ 1 × 1" Stamp Photo**: $25.4 \times 25.4\text{ mm}$ for ID badges and student cards.
+  * **📸 4 × 6" / 4R Photo Print**: $101.6 \times 152.4\text{ mm}$ classic lab photo print.
+  * **🖼️ 5 × 7" / 5R Photo Print**: $127.0 \times 177.8\text{ mm}$ studio portrait frame.
+  * **🖼️ 3.5 × 5" / 3R Photo Print**: $88.9 \times 127.0\text{ mm}$.
+  * **💳 Wallet Size**: $63.5 \times 88.9\text{ mm}$ ($2.5 \times 3.5\text{ inches}$).
+  * **📷 Polaroid Style**: $88.9 \times 108.0\text{ mm}$ with authentic photo borders and bottom caption margin.
+  * **📄 A5 & A6 Sheets**: $148 \times 210\text{ mm}$ and $105 \times 148\text{ mm}$.
+  * **🔍 Original Edit Resolution**: Exact uncropped pixels of the edited source.
+  * **⚙️ Custom Size**: Direct physical millimeter or inch inputs with aspect ratio lock.
+* **4 Professional File Formats**:
+  * **JPEG (.jpg)**: Standard lab photo format with real-time Quality slider (70% to 100% Studio Fine).
+  * **PNG (.png)**: Lossless 24-bit studio image.
+  * **PDF (.pdf)**: High-resolution vector-scaled document sized to exact physical millimeters (`MediaBox [0 0 W_pt H_pt]`) for 1:1 print shops or digital visa uploads.
+  * **WebP (.webp)**: Modern web-optimized image format.
+* **Studio Print Resolutions**:
+  * **300 DPI**: Industry standard for Canon G3010, Epson, and HP inkjet photo printers.
+  * **600 DPI**: Ultra High-Definition fine art and archive prints.
+  * **150 DPI / 72 DPI**: Web, email, and digital application portals.
+* **PakiPrint Styling & Finishing Controls**:
+  * **Corner Roundness (0% to 100%)**: Interactive slider and 1-click chips (`Square 0%`, `Soft 15%`, `ID Card 30%`, `Circle/Badge 100%`) for round stickers, badges, and curved cards.
+  * **Photo Borders**: None (Borderless), Thin White (1.0 mm), Classic White (2.5 mm), Polaroid Frame, or Thin Black (0.5 mm).
+  * **Fit Modes**: *Cover (Fill Frame)* vs *Contain (Fit Entire Photo)*.
+* **Convenient Save Shortcuts**:
+  * **Keyboard Shortcut**: Press **`⌘S`** anywhere in the app to open the Save & Export Studio immediately!
+  * **Photo Editor Toolbar**: 1-click **`💾 Save Photo...`** button right next to your adjustments.
+  * **Customer Photos List**: 1-click **`💾 Save`** button on every customer card in the sidebar.
+  * **Sheet Floating Menu & Inspector**: 1-click **`💾 Save`** on the selected sheet photo.
+  * **macOS Clipboard**: 1-click **`📋 Copy Image`** copies the high-resolution photo directly to your macOS clipboard for instant pasting into Pages, Photoshop, or Mail.
+  * **Add to Studio**: 1-click **`➕ Add to Studio Photos`** saves your edited photo as a new entry in your customer photos queue.
+
+---
+
+### 🔢 Customer Photo Copies Counter (PakiPrint Feature)
+* **Stepper Controls**: Each customer card in the sidebar features an intuitive **`Copies: [ − count + ]`** counter.
+* **Instant Sheet Sync**:
+  * Click **`+`** to automatically add another copy of that customer's photo onto the A4 sheet.
+  * Click **`−`** to remove one copy from the sheet.
+  * Effortlessly manage multi-customer orders on a single sheet of photo paper!
+
+---
 
 ### 🖼️ Single Photo Full A4 Printing
 * **1-Click "🖼️ 1 Photo Full A4" Preset**: Instantly formats a single customer portrait or high-resolution photograph to fill an entire A4 page ($210 \times 297\text{ mm}$ or $2480 \times 3508\text{ px}$ at 300 DPI).

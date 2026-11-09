@@ -14,7 +14,7 @@
         <div class="app-logo">
           <img src="assets/logo.png" alt="Lemon Logo" class="app-logo-img">
           <span class="app-title">Lemon</span>
-          <span class="badge-version">v1.2.0</span>
+          <span class="badge-version">v1.3.0</span>
         </div>
 
         <!-- Quick 1-Click Layout Presets -->
@@ -76,9 +76,14 @@
             Export & Save
           </button>
           <div class="dropdown-content">
-            <a href="#" id="btnExportSingle">Export Single Photo (300 DPI PNG)</a>
-            <a href="#" id="btnExportSheetImg">Export Sheet Image (300 DPI PNG)</a>
-            <a href="#" id="btnExportPDF">Save Sheet as PDF (300 DPI)</a>
+            <a href="#" id="btnOpenSaveStudio" class="dropdown-highlight">💾 Save & Export Photo Studio... <span class="kbd-hint">⌘S</span></a>
+            <div class="dropdown-divider"></div>
+            <a href="#" id="btnExportSingle">🖼️ Quick Save Photo (300 DPI PNG)</a>
+            <a href="#" id="btnExportSingleJPG">🖼️ Quick Save Photo (300 DPI JPG)</a>
+            <a href="#" id="btnExportFullA4Quick">🖼️ Quick Save Photo (Full A4)</a>
+            <div class="dropdown-divider"></div>
+            <a href="#" id="btnExportSheetImg">📄 Export Sheet Image (300 DPI PNG)</a>
+            <a href="#" id="btnExportPDF">📄 Save Sheet as PDF (300 DPI)</a>
             <div class="dropdown-divider"></div>
             <a href="#" id="btnQuickPrintMenu">⚡ Quick Print to Default Printer</a>
           </div>
@@ -215,6 +220,7 @@
               <!-- Floating Action Menu over Selected Sheet Photo -->
               <div id="sheetFloatingMenu" class="sheet-floating-menu" style="display: none;">
                 <span id="floatDimensionBadge" class="float-dim-badge">35 × 45 mm</span>
+                <button id="btnFloatExportPhoto" class="float-btn float-save" title="Save / Export this photo in any size or format (A4, Passport, 4x6, etc.)">💾 Save</button>
                 <button id="btnFloatFullA4" class="float-btn" title="Expand this photo to Full A4 page">🖼️ Full A4</button>
                 <button id="btnFloatEdit" class="float-btn" title="Edit this photo">✏️ Edit</button>
                 <button id="btnFloatCopy" class="float-btn" title="Make a copy (Cmd+D)">⧉ Copy</button>
@@ -284,6 +290,12 @@
               </button>
 
               <button id="btnResetCrop" class="btn btn-sm btn-ghost" title="Reset all adjustments">Reset All</button>
+
+              <!-- Save / Export Photo Button in Editor -->
+              <button id="btnSaveEditedPhoto" class="btn btn-sm btn-save-editor" title="Save / Export this photo in any size (Full A4, Passport, 4x6, etc.) and format (JPG, PNG, PDF)">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                💾 Save Photo...
+              </button>
 
               <!-- Back to Sheet Button -->
               <button id="btnDoneEditSheet" class="btn btn-sm btn-primary">
@@ -551,6 +563,24 @@
               </select>
             </div>
           </div>
+
+          <!-- Save & Export Edited Photo Section -->
+          <div class="inspector-section inspector-export-highlight">
+            <div class="section-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              Save & Export Photo
+            </div>
+            <p class="section-desc">Save this edited photo in 300/600 DPI in any format (A4, Passport, 4×6", 5×7", JPG, PNG, PDF):</p>
+            <div class="quick-size-grid mt-2">
+              <button type="button" class="btn btn-xs btn-size-chip highlight-chip" id="btnQuickExportA4">🖼️ Full A4</button>
+              <button type="button" class="btn btn-xs btn-size-chip" id="btnQuickExportPassport">🪪 Passport</button>
+              <button type="button" class="btn btn-xs btn-size-chip" id="btnQuickExport2x2">🇺🇸 2×2"</button>
+              <button type="button" class="btn btn-xs btn-size-chip" id="btnQuickExport4x6">📸 4×6"</button>
+            </div>
+            <button type="button" id="btnInspectorOpenSaveStudio" class="btn btn-primary btn-save-action mt-2 w-100">
+              💾 Save / Export Options (⌘S)...
+            </button>
+          </div>
         </div>
 
         <!-- PANEL B: SHEET LAYOUT CONTROLS -->
@@ -614,6 +644,10 @@
             <div class="resize-tip">
               <span>💡 <b>Interactive Drag</b>: Drag any of the 8 white corner/edge handles on the selected photo to resize it freely on the paper!</span>
             </div>
+
+            <button type="button" id="btnExportSelectedPhotoFromInspector" class="btn btn-sm btn-secondary mt-2 w-100" title="Save or export this selected photo in any size (Full A4, Passport, 4x6, etc.) or format">
+              💾 Save / Export This Photo (⌘S)...
+            </button>
           </div>
 
           <!-- Section 1: Sheet Layout (Core 5 on A4 feature!) -->
@@ -813,6 +847,195 @@
       </div>
     </div>
 
+    <!-- Save & Export Photo Studio Modal -->
+    <div id="savePhotoModal" class="modal-overlay" style="display: none;">
+      <div class="modal-container modal-lg">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <h3>💾 Save & Export Photo Studio</h3>
+            <span class="modal-badge-pro">Studio 300 / 600 DPI</span>
+          </div>
+          <button id="btnCloseSaveModal" class="icon-btn" title="Close (Esc)">✕</button>
+        </div>
+
+        <div class="modal-body-split">
+          <!-- Left Column: Live Preview & File Info -->
+          <div class="export-preview-column">
+            <div class="export-preview-box">
+              <canvas id="exportPreviewCanvas"></canvas>
+            </div>
+            <div class="export-stats-card">
+              <div class="stat-badge stat-primary">
+                <span class="stat-label">Output Resolution:</span>
+                <span id="exportStatResolution" class="stat-val">2480 × 3508 px</span>
+              </div>
+              <div class="stat-badge">
+                <span class="stat-label">Physical Print Size:</span>
+                <span id="exportStatPhysical" class="stat-val">210.0 × 297.0 mm (A4)</span>
+              </div>
+              <div class="stat-badge">
+                <span class="stat-label">DPI & Quality:</span>
+                <span id="exportStatDPI" class="stat-val">300 DPI • High Quality</span>
+              </div>
+              <div class="stat-badge">
+                <span class="stat-label">Format & Est. Size:</span>
+                <span id="exportStatSize" class="stat-val">JPEG • ~3.2 MB</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Export Options -->
+          <div class="export-options-column">
+            <!-- Target Selection: Single Photo vs Full Sheet -->
+            <div class="export-option-group">
+              <label class="export-group-title">What to Save & Export:</label>
+              <div class="segmented-control w-100" id="exportTargetSegments">
+                <button type="button" class="segment-btn active" id="btnExportTargetPhoto" data-target="photo">
+                  👤 Active Edited Photo
+                </button>
+                <button type="button" class="segment-btn" id="btnExportTargetSheet" data-target="sheet">
+                  📄 Full Sheet Print Layout
+                </button>
+              </div>
+            </div>
+
+            <!-- Output Size Presets -->
+            <div class="export-option-group" id="exportSizeGroup">
+              <label class="export-group-title">Output Photo Size:</label>
+              <div class="export-size-chips" id="exportSizeChipsContainer">
+                <button type="button" class="export-chip active" data-preset="full_a4">🖼️ Full A4 (210×297mm)</button>
+                <button type="button" class="export-chip" data-preset="passport">🪪 Passport (35×45mm)</button>
+                <button type="button" class="export-chip" data-preset="us_2x2">🇺🇸 US 2×2" (51×51mm)</button>
+                <button type="button" class="export-chip" data-preset="stamp_1x1">🏷️ 1×1" Stamp (25×25mm)</button>
+                <button type="button" class="export-chip" data-preset="photo_4x6">📸 4×6" (4R / 102×152mm)</button>
+                <button type="button" class="export-chip" data-preset="photo_5x7">🖼️ 5×7" (5R / 127×178mm)</button>
+                <button type="button" class="export-chip" data-preset="photo_3x5">🖼️ 3.5×5" (3R / 89×127mm)</button>
+                <button type="button" class="export-chip" data-preset="wallet">💳 Wallet (64×89mm)</button>
+                <button type="button" class="export-chip" data-preset="polaroid">📷 Polaroid Style (89×108mm)</button>
+                <button type="button" class="export-chip" data-preset="a5">📄 A5 (148×210mm)</button>
+                <button type="button" class="export-chip" data-preset="a6">📄 A6 (105×148mm)</button>
+                <button type="button" class="export-chip" data-preset="original">🔍 Original Resolution</button>
+                <button type="button" class="export-chip" data-preset="custom">⚙️ Custom Size...</button>
+              </div>
+
+              <!-- Custom Dimension inputs (shown when Custom is selected or to tweak) -->
+              <div id="exportCustomSizeRow" class="export-custom-size-row" style="display: none;">
+                <div class="input-unit-wrapper">
+                  <span class="unit-tag">W:</span>
+                  <input type="number" id="numExportW" class="form-input" min="10" max="600" step="1" value="210">
+                  <span class="unit-tag">mm</span>
+                </div>
+                <span class="dim-separator">×</span>
+                <div class="input-unit-wrapper">
+                  <span class="unit-tag">H:</span>
+                  <input type="number" id="numExportH" class="form-input" min="10" max="800" step="1" value="297">
+                  <span class="unit-tag">mm</span>
+                </div>
+                <label class="toggle-label mini-toggle">
+                  <input type="checkbox" id="chkExportLockAspect" checked>
+                  <span>🔒 Lock Ratio</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Format & Quality -->
+            <div class="export-option-group">
+              <label class="export-group-title">File Format & Print Resolution:</label>
+              <div class="export-format-row">
+                <div class="segmented-control" id="exportFormatSegments">
+                  <button type="button" class="segment-btn active" data-format="jpg">JPG</button>
+                  <button type="button" class="segment-btn" data-format="png">PNG</button>
+                  <button type="button" class="segment-btn" data-format="pdf">PDF (Print)</button>
+                  <button type="button" class="segment-btn" data-format="webp">WebP</button>
+                </div>
+
+                <!-- DPI Dropdown -->
+                <select id="selExportDPI" class="form-select export-dpi-select">
+                  <option value="300" selected>300 DPI (Studio Standard)</option>
+                  <option value="600">600 DPI (Ultra Fine HD)</option>
+                  <option value="150">150 DPI (Email / Web)</option>
+                  <option value="72">72 DPI (Screen)</option>
+                </select>
+              </div>
+
+              <!-- JPG Quality Slider (visible for JPG and WebP) -->
+              <div id="exportQualityRow" class="form-row export-quality-row mt-2">
+                <div class="flex-between">
+                  <label>Quality:</label>
+                  <span id="lblExportQualityVal" class="val-label">95% (Studio Fine)</span>
+                </div>
+                <input type="range" id="sliderExportQuality" min="70" max="100" step="1" value="95">
+              </div>
+            </div>
+
+            <!-- Styling & Finishing (Corner Roundness & Borders from pakiprint) -->
+            <div class="export-option-group" id="exportFinishingGroup">
+              <label class="export-group-title">Finishing & Photo Style (PakiPrint Features):</label>
+
+              <div class="form-row">
+                <div class="flex-between">
+                  <label>Corner Roundness:</label>
+                  <span id="lblExportRoundnessVal" class="val-label">0% (Square)</span>
+                </div>
+                <input type="range" id="sliderExportRoundness" min="0" max="100" step="1" value="0">
+              </div>
+              <div class="quick-chips-row">
+                <button type="button" class="btn-xs chip-roundness active" data-round="0">Square (0%)</button>
+                <button type="button" class="btn-xs chip-roundness" data-round="15">Soft (15%)</button>
+                <button type="button" class="btn-xs chip-roundness" data-round="30">ID Card (30%)</button>
+                <button type="button" class="btn-xs chip-roundness" data-round="100">Circle / Badge (100%)</button>
+              </div>
+
+              <div class="form-row mt-2">
+                <label>Photo Border:</label>
+                <select id="selExportBorder" class="form-select">
+                  <option value="none" selected>None (Borderless)</option>
+                  <option value="thinWhite">Thin White Border (1 mm)</option>
+                  <option value="thickWhite">Classic White Border (2.5 mm)</option>
+                  <option value="polaroid">Polaroid Frame (Wide Bottom Margin)</option>
+                  <option value="thinBlack">Thin Black Border (0.5 mm)</option>
+                </select>
+              </div>
+
+              <div class="form-row mt-2">
+                <label>Fit Mode:</label>
+                <div class="segmented-control sm-seg" id="exportFitSegments">
+                  <button type="button" class="segment-btn active" data-fit="cover" title="Fills entire photo frame, cropping edges if aspect ratio differs">
+                    Fill / Cover Frame
+                  </button>
+                  <button type="button" class="segment-btn" data-fit="contain" title="Preserves entire photo inside frame without cropping">
+                    Fit Full Photo
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- File Name -->
+            <div class="export-option-group">
+              <label class="export-group-title">File Name:</label>
+              <div class="input-filename-wrapper">
+                <input type="text" id="txtExportFilename" class="form-input" value="Lemon_Photo.jpg">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" id="btnExportAddToStudio" class="btn btn-secondary" title="Adds this edited photo as a new entry in your customer photos queue">
+            ➕ Add to Studio Photos
+          </button>
+          <button type="button" id="btnExportCopyClipboard" class="btn btn-secondary" title="Copy high-res image directly to macOS clipboard">
+            📋 Copy Image
+          </button>
+          <button type="button" id="btnExportCancel" class="btn btn-ghost">Cancel</button>
+          <button type="button" id="btnExportSaveFile" class="btn btn-primary btn-save-action" title="Save file to your Mac (Cmd+S)">
+            💾 Save / Download to Mac
+            <span class="kbd-shortcut">⌘S</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Camera Capture Modal for Customer Studio -->
     <div id="cameraModal" class="modal-overlay" style="display: none;">
       <div class="modal-container">
@@ -837,6 +1060,9 @@
       </div>
     </div>
   </div>
+
+  <!-- Toast Notification Pill -->
+  <div id="toastNotification" class="toast-notification" style="display: none;"></div>
 
   <script src="app.js"></script>
 </body>
