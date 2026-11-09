@@ -14,7 +14,7 @@
         <div class="app-logo">
           <img src="assets/logo.png" alt="Lemon Logo" class="app-logo-img">
           <span class="app-title">Lemon</span>
-          <span class="badge-version">v1.3.0</span>
+          <span class="badge-version">v1.4.0</span>
         </div>
 
         <!-- Quick 1-Click Layout Presets -->
@@ -69,6 +69,21 @@
           </div>
         </div>
 
+        <!-- Direct Download A4 Sheet Dropdown Button -->
+        <div class="dropdown">
+          <button id="btnDownloadA4Sheet" class="btn btn-download-sheet" title="Download the full A4 sheet containing all photos (300 DPI high resolution)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span>📥 Download A4 Sheet</span>
+          </button>
+          <div class="dropdown-content">
+            <a href="#" id="btnQuickDownloadA4JPG">🖼️ Download A4 as JPG (300 DPI Studio Quality)</a>
+            <a href="#" id="btnQuickDownloadA4PNG">🖼️ Download A4 as PNG (300 DPI Lossless)</a>
+            <a href="#" id="btnQuickDownloadA4PDF">📄 Download A4 as PDF (1:1 Print Ready)</a>
+            <div class="dropdown-divider"></div>
+            <a href="#" id="btnOpenSaveStudioForSheet">⚙️ Custom Export Studio (Choose DPI & Format)...</a>
+          </div>
+        </div>
+
         <!-- Export & Save Menu -->
         <div class="dropdown">
           <button id="btnExportMenu" class="btn btn-secondary">
@@ -78,12 +93,13 @@
           <div class="dropdown-content">
             <a href="#" id="btnOpenSaveStudio" class="dropdown-highlight">💾 Save & Export Photo Studio... <span class="kbd-hint">⌘S</span></a>
             <div class="dropdown-divider"></div>
-            <a href="#" id="btnExportSingle">🖼️ Quick Save Photo (300 DPI PNG)</a>
-            <a href="#" id="btnExportSingleJPG">🖼️ Quick Save Photo (300 DPI JPG)</a>
-            <a href="#" id="btnExportFullA4Quick">🖼️ Quick Save Photo (Full A4)</a>
+            <a href="#" id="btnExportSheetImgJPG">📄 Download Full A4 Sheet (300 DPI JPG)</a>
+            <a href="#" id="btnExportSheetImg">📄 Download Full A4 Sheet (300 DPI PNG)</a>
+            <a href="#" id="btnExportPDF">📄 Download Full A4 Sheet as PDF (300 DPI)</a>
             <div class="dropdown-divider"></div>
-            <a href="#" id="btnExportSheetImg">📄 Export Sheet Image (300 DPI PNG)</a>
-            <a href="#" id="btnExportPDF">📄 Save Sheet as PDF (300 DPI)</a>
+            <a href="#" id="btnExportSingle">👤 Quick Save Single Photo (PNG)</a>
+            <a href="#" id="btnExportSingleJPG">👤 Quick Save Single Photo (JPG)</a>
+            <a href="#" id="btnExportFullA4Quick">🖼️ Quick Save Single Photo (Full A4)</a>
             <div class="dropdown-divider"></div>
             <a href="#" id="btnQuickPrintMenu">⚡ Quick Print to Default Printer</a>
           </div>
@@ -175,6 +191,12 @@
               <!-- Align to Grid -->
               <button id="btnAlignGrid" class="btn btn-sm btn-ghost" title="Auto-align all photos into neat rows and columns">
                 🔄 Auto-Grid
+              </button>
+
+              <!-- Download Sheet Button in Toolbar -->
+              <button id="btnToolbarDownloadSheet" class="btn btn-sm btn-download-sheet-toolbar" title="Download this full A4 sheet containing all photos (300 DPI high-res)">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <span>📥 Download A4 Sheet</span>
               </button>
 
               <!-- 1 Photo Full A4 shortcut in toolbar -->
@@ -886,16 +908,37 @@
 
           <!-- Right Column: Export Options -->
           <div class="export-options-column">
-            <!-- Target Selection: Single Photo vs Full Sheet -->
+            <!-- Target Selection: Full Sheet vs Single Photo -->
             <div class="export-option-group">
               <label class="export-group-title">What to Save & Export:</label>
               <div class="segmented-control w-100" id="exportTargetSegments">
-                <button type="button" class="segment-btn active" id="btnExportTargetPhoto" data-target="photo">
-                  👤 Active Edited Photo
+                <button type="button" class="segment-btn active" id="btnExportTargetSheet" data-target="sheet">
+                  📄 Full Sheet (All Photos on A4)
                 </button>
-                <button type="button" class="segment-btn" id="btnExportTargetSheet" data-target="sheet">
-                  📄 Full Sheet Print Layout
+                <button type="button" class="segment-btn" id="btnExportTargetPhoto" data-target="photo">
+                  👤 Single Photo Only
                 </button>
+              </div>
+            </div>
+
+            <!-- Full Sheet Info & Controls Card (visible when Sheet target is active) -->
+            <div class="export-sheet-info-card" id="exportSheetInfoCard">
+              <div class="sheet-info-row">
+                <span class="sheet-info-icon">📄</span>
+                <div class="sheet-info-text">
+                  <b id="lblExportSheetTitle">Full A4 Sheet (5 Photos)</b>
+                  <p id="lblExportSheetDesc">Exports the complete A4 page with all your passport photos arranged at 100% true-to-scale millimeter accuracy.</p>
+                </div>
+              </div>
+              <div class="sheet-info-options">
+                <label class="toggle-label mini-toggle">
+                  <input type="checkbox" id="chkExportIncludeGuides" checked>
+                  <span>✂️ Include Cutting Lines & Crop Marks</span>
+                </label>
+                <label class="toggle-label mini-toggle">
+                  <input type="checkbox" id="chkExportIncludeHeader" checked>
+                  <span>🏷️ Include Studio Header Text</span>
+                </label>
               </div>
             </div>
 

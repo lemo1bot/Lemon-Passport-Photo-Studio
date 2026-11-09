@@ -12,17 +12,32 @@
 
 Get the official disk image directly from GitHub Releases:
 
-* 👉 **[Download Lemon-v1.3.0.dmg (Versioned)](https://github.com/lemo1bot/Lemon-Passport-Photo-Studio/releases/download/v1.3.0/Lemon-v1.3.0.dmg)** *(Recommended)*
-* 👉 **[Download Lemon.dmg](https://github.com/lemo1bot/Lemon-Passport-Photo-Studio/releases/download/v1.3.0/Lemon.dmg)** *(Latest)*
+* 👉 **[Download Lemon-v1.4.0.dmg (Versioned)](https://github.com/lemo1bot/Lemon-Passport-Photo-Studio/releases/download/v1.4.0/Lemon-v1.4.0.dmg)** *(Recommended)*
+* 👉 **[Download Lemon.dmg](https://github.com/lemo1bot/Lemon-Passport-Photo-Studio/releases/download/v1.4.0/Lemon.dmg)** *(Latest)*
 
 ### Quick Installation:
-1. Open **`Lemon-v1.3.0.dmg`** (or **`Lemon.dmg`**).
+1. Open **`Lemon-v1.4.0.dmg`** (or **`Lemon.dmg`**).
 2. Drag **`Lemon.app`** into the **Applications** folder shortcut.
 3. Launch **Lemon** from Launchpad, Spotlight, or the Applications folder!
 
 ---
 
 ## ✨ Key Features
+
+### 📄 Full A4 Sheet Download (All 5 Photos in 1 Click)
+* **Direct 1-Click "📥 Download A4 Sheet" Button**: Prominently featured right in the top navigation bar and sheet toolbar.
+* **Download the Entire Sheet as an Image**:
+  * If you arrange 5 passport photos (or any count) on an A4 sheet, you can immediately download the complete A4 page with all your photos positioned at true 1:1 scale.
+  * **Formats**: High-Resolution **JPG** (300/600 DPI with quality slider), **PNG** (24-bit lossless), or Print-Ready vector **PDF** ($210 \times 297\text{ mm}$ physical paper size).
+  * **1-Click Quick Download Menu**:
+    * 🖼️ *Download A4 as JPG (300 DPI Studio Quality)*
+    * 🖼️ *Download A4 as PNG (300 DPI Lossless)*
+    * 📄 *Download A4 as PDF (1:1 Print Ready)*
+    * ⚙️ *Custom Export Studio Options (`⌘S`)*
+* **Toggles for Guides & Marks**: Choose whether to include scissor cutting guidelines, corner crop marks, and studio header text on your downloaded A4 image.
+* **Full Sheet vs Single Photo Mode in Save Studio (`⌘S`)**:
+  * When viewing the Print Sheet, pressing **`⌘S`** or clicking Save defaults directly to **"📄 Full Sheet (All Photos on A4)"**!
+  * Easily toggle between downloading the complete A4 sheet or saving an individual customer photo.
 
 ### 💾 Save & Export Photo Studio (Any Size & Any Format)
 * **Save in Any Standard or Custom Size**:

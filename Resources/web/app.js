@@ -125,7 +125,7 @@ const state = {
 
   // Save & Export Photo Studio State (Supports any format & size)
   exportState: {
-    target: 'photo', // 'photo' or 'sheet'
+    target: 'sheet', // 'sheet' or 'photo' (defaults to full sheet layout)
     targetPhotoIdx: 0,
     preset: 'full_a4',
     customW: 210,
@@ -137,7 +137,9 @@ const state = {
     roundness: 0,
     border: 'none',
     fit: 'cover',
-    filename: 'Lemon_Photo.jpg'
+    includeGuides: true,
+    includeHeader: true,
+    filename: 'Lemon_A4_Sheet_5_Photos.jpg'
   },
 
   // Webcam stream
@@ -994,7 +996,14 @@ function setupEventListeners() {
       }
     } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
       e.preventDefault();
-      openSavePhotoModal('photo', state.activePhotoIdx);
+      // If save modal is already open, Cmd+S executes the save action
+      const modal = document.getElementById('savePhotoModal');
+      if (modal && modal.style.display !== 'none') {
+        handlePerformSave();
+      } else {
+        const target = (state.activeTab === 'crop') ? 'photo' : 'sheet';
+        openSavePhotoModal(target, state.activePhotoIdx);
+      }
     } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'p') {
       e.preventDefault();
       handleDirectPrint();
@@ -1041,9 +1050,42 @@ function setupEventListeners() {
   const btnQuickPrint = document.getElementById('btnQuickPrintMenu');
   if (btnQuickPrint) btnQuickPrint.addEventListener('click', handleQuickPrint);
 
+  // Direct Download A4 Sheet button in header
+  const btnDlA4 = document.getElementById('btnDownloadA4Sheet');
+  if (btnDlA4) btnDlA4.addEventListener('click', () => downloadFullA4Sheet('jpg', 300));
+
+  const btnQkDlJPG = document.getElementById('btnQuickDownloadA4JPG');
+  if (btnQkDlJPG) btnQkDlJPG.addEventListener('click', (e) => { e.preventDefault(); downloadFullA4Sheet('jpg', 300); });
+
+  const btnQkDlPNG = document.getElementById('btnQuickDownloadA4PNG');
+  if (btnQkDlPNG) btnQkDlPNG.addEventListener('click', (e) => { e.preventDefault(); downloadFullA4Sheet('png', 300); });
+
+  const btnQkDlPDF = document.getElementById('btnQuickDownloadA4PDF');
+  if (btnQkDlPDF) btnQkDlPDF.addEventListener('click', (e) => { e.preventDefault(); downloadFullA4Sheet('pdf', 300); });
+
+  const btnOpenSaveForSheet = document.getElementById('btnOpenSaveStudioForSheet');
+  if (btnOpenSaveForSheet) btnOpenSaveForSheet.addEventListener('click', (e) => { e.preventDefault(); openSavePhotoModal('sheet'); });
+
+  // Toolbar Download A4 Sheet button
+  const btnTbDlSheet = document.getElementById('btnToolbarDownloadSheet');
+  if (btnTbDlSheet) btnTbDlSheet.addEventListener('click', () => downloadFullA4Sheet('jpg', 300));
+
   // Save & Export Studio Triggers
   const btnOpenSave = document.getElementById('btnOpenSaveStudio');
-  if (btnOpenSave) btnOpenSave.addEventListener('click', (e) => { e.preventDefault(); openSavePhotoModal('photo'); });
+  if (btnOpenSave) btnOpenSave.addEventListener('click', (e) => {
+    e.preventDefault();
+    const target = (state.activeTab === 'crop') ? 'photo' : 'sheet';
+    openSavePhotoModal(target);
+  });
+
+  const btnExpSheetJPG = document.getElementById('btnExportSheetImgJPG');
+  if (btnExpSheetJPG) btnExpSheetJPG.addEventListener('click', (e) => { e.preventDefault(); downloadFullA4Sheet('jpg', 300); });
+
+  const btnExpSheet = document.getElementById('btnExportSheetImg');
+  if (btnExpSheet) btnExpSheet.addEventListener('click', (e) => { e.preventDefault(); downloadFullA4Sheet('png', 300); });
+
+  const btnExpPDF = document.getElementById('btnExportPDF');
+  if (btnExpPDF) btnExpPDF.addEventListener('click', (e) => { e.preventDefault(); downloadFullA4Sheet('pdf', 300); });
 
   const btnExpSingle = document.getElementById('btnExportSingle');
   if (btnExpSingle) btnExpSingle.addEventListener('click', (e) => { e.preventDefault(); quickExportSingle('png'); });
@@ -1053,12 +1095,6 @@ function setupEventListeners() {
 
   const btnExpFullA4Quick = document.getElementById('btnExportFullA4Quick');
   if (btnExpFullA4Quick) btnExpFullA4Quick.addEventListener('click', (e) => { e.preventDefault(); quickExportFullA4('jpg'); });
-
-  const btnExpSheet = document.getElementById('btnExportSheetImg');
-  if (btnExpSheet) btnExpSheet.addEventListener('click', (e) => { e.preventDefault(); handleExportSheetImage(); });
-
-  const btnExpPDF = document.getElementById('btnExportPDF');
-  if (btnExpPDF) btnExpPDF.addEventListener('click', (e) => { e.preventDefault(); handleExportPDF(); });
 
   // Photo Editor Save Buttons
   const btnSaveEd = document.getElementById('btnSaveEditedPhoto');
@@ -2755,6 +2791,11 @@ function renderCrop() {
   ctx.fillStyle = '#FFFFFF';
   ctx.fillRect(0, 0, frameW, frameH);
 
+  if (photo) {
+    photo.cropRefW = frameW;
+    photo.cropRefH = frameH;
+  }
+
   if (photo && photo.img) {
     drawAdjustedPhoto(ctx, photo, 0, 0, frameW, frameH);
   } else {
@@ -3148,8 +3189,13 @@ function drawAdjustedPhoto(ctx, photo, x, y, w, h) {
   const drawW = baseW * effectiveZoom;
   const drawH = baseH * effectiveZoom;
 
-  const centerX = x + (w / 2) + (photo.panX || 0);
-  const centerY = y + (h / 2) + (photo.panY || 0);
+  const refW = photo.cropRefW || 300;
+  const refH = photo.cropRefH || 400;
+  const scalePanX = photo.cropRefW ? (w / refW) : 1;
+  const scalePanY = photo.cropRefH ? (h / refH) : 1;
+
+  const centerX = x + (w / 2) + (photo.panX || 0) * scalePanX;
+  const centerY = y + (h / 2) + (photo.panY || 0) * scalePanY;
 
   ctx.translate(centerX, centerY);
 
@@ -3486,13 +3532,18 @@ function runAIBackgroundWhitener() {
   }, 200);
 }
 
-// MARK: - High Resolution 300 DPI Generation
-function generateSheet300DPICanvas() {
+// MARK: - High Resolution Sheet Canvas Generation (300 / 600 DPI & Print Accurate)
+function generateSheet300DPICanvas(targetDPI = 300, options = {}) {
   const paperMM = getPaperDimensionsMM();
   const photoMM = getPassportDimensionsMM();
   const isFullA4Borderless = state.arrangement === 'fullPage' && state.fullPageMode === 'borderless';
 
-  const dpi = 300;
+  const showMarks = (options.showCropMarks !== undefined) ? options.showCropMarks : (!isFullA4Borderless && state.showCropMarks);
+  const showCuts = (options.showCutLines !== undefined) ? options.showCutLines : (!isFullA4Borderless && state.showCutLines);
+  const showRuler = (options.showCalibrationRuler !== undefined) ? options.showCalibrationRuler : (!isFullA4Borderless && state.showCalibrationRuler);
+  const showHeader = (options.showSheetHeader !== undefined) ? options.showSheetHeader : (!isFullA4Borderless && state.showSheetHeader);
+
+  const dpi = targetDPI || 300;
   const pixelW = Math.round((paperMM.w / 25.4) * dpi);
   const pixelH = Math.round((paperMM.h / 25.4) * dpi);
 
@@ -3501,12 +3552,12 @@ function generateSheet300DPICanvas() {
   offCanvas.height = pixelH;
   const ctx = offCanvas.getContext('2d');
 
-  const scale = pixelW / (paperMM.w * (72 / 25.4));
-  ctx.scale(scale, scale);
-
   const pointsPerMM = 72 / 25.4;
   const paperPointsW = paperMM.w * pointsPerMM;
   const paperPointsH = paperMM.h * pointsPerMM;
+
+  const scale = pixelW / paperPointsW;
+  ctx.scale(scale, scale);
 
   ctx.fillStyle = '#FFFFFF';
   ctx.fillRect(0, 0, paperPointsW, paperPointsH);
@@ -3519,10 +3570,10 @@ function generateSheet300DPICanvas() {
     const hPt = item.hMM * pointsPerMM;
 
     if (photo) drawAdjustedPhoto(ctx, photo, xPt, yPt, wPt, hPt);
-    if (!isFullA4Borderless && state.showCropMarks) drawCropMarks(ctx, xPt, yPt, wPt, hPt);
+    if (showMarks) drawCropMarks(ctx, xPt, yPt, wPt, hPt);
   });
 
-  if (!isFullA4Borderless && state.showCutLines) {
+  if (showCuts) {
     ctx.save();
     ctx.strokeStyle = 'rgba(156, 163, 175, 0.6)';
     ctx.lineWidth = 0.5;
@@ -3533,15 +3584,15 @@ function generateSheet300DPICanvas() {
     ctx.restore();
   }
 
-  if (!isFullA4Borderless && state.showCalibrationRuler) {
+  if (showRuler) {
     drawCalibrationRuler(ctx, paperPointsW, paperPointsH, pointsPerMM);
   }
 
-  if (!isFullA4Borderless && state.showSheetHeader) {
+  if (showHeader) {
     ctx.save();
     ctx.fillStyle = '#64748B';
     ctx.font = '6.5px -apple-system, sans-serif';
-    const marginPt = state.marginMM * pointsPerMM;
+    const marginPt = (state.marginMM || 10) * pointsPerMM;
     const mediaName = state.paperType === 'glossy' ? 'Glossy Photo' : (state.paperType === 'semiGloss' ? 'Semi-Gloss' : (state.paperType === 'matte' ? 'Matte' : 'Plain'));
     const infoText = `Lemon Photo Studio • ${Math.round(photoMM.w)}×${Math.round(photoMM.h)} mm • ${state.sheetItems.length} Photos on ${PAPER_PRESETS[state.paperSize].name.split(' ')[0]} (${mediaName}) • Print at 100% (No Scaling)`;
     ctx.fillText(infoText, marginPt, 14);
@@ -3553,6 +3604,38 @@ function generateSheet300DPICanvas() {
     paperWidthPoints: paperPointsW,
     paperHeightPoints: paperPointsH
   };
+}
+
+// Direct 1-Click Download of the entire A4 Sheet with all photos
+function downloadFullA4Sheet(format = 'jpg', dpi = 300, options = {}) {
+  const paperMM = getPaperDimensionsMM();
+  const count = state.sheetItems.length;
+  const paperName = (PAPER_PRESETS[state.paperSize]?.name || 'A4').split(' ')[0];
+  const filename = `Lemon_${paperName}_Sheet_${count}_Photos_${dpi}dpi.${format}`;
+
+  const { canvas } = generateSheet300DPICanvas(dpi, options);
+
+  if (format === 'pdf') {
+    canvas.toBlob((jpegBlob) => {
+      if (!jpegBlob) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const uint8 = new Uint8Array(reader.result);
+        const pdfBlob = createSingleImagePDFBlob(uint8, canvas.width, canvas.height, paperMM.w, paperMM.h);
+        saveBlobToFile(pdfBlob, filename);
+        showToast(`📄 Downloaded: <b>${filename}</b> (${Math.round(paperMM.w)}×${Math.round(paperMM.h)} mm PDF)`);
+      };
+      reader.readAsArrayBuffer(jpegBlob);
+    }, 'image/jpeg', 0.98);
+  } else {
+    const mime = format === 'png' ? 'image/png' : (format === 'webp' ? 'image/webp' : 'image/jpeg');
+    const qual = (format === 'png') ? undefined : 0.96;
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      saveBlobToFile(blob, filename);
+      showToast(`📥 Downloaded: <b>${filename}</b> (${canvas.width}×${canvas.height} px, ${format.toUpperCase()})`);
+    }, mime, qual);
+  }
 }
 
 // MARK: - Direct Native Print Operations
@@ -3653,6 +3736,22 @@ function setupSaveModalControls() {
   if (btnTargetSheet) {
     btnTargetSheet.addEventListener('click', () => {
       state.exportState.target = 'sheet';
+      updateExportUIAndPreview();
+    });
+  }
+
+  // Full Sheet Guide Toggles
+  const chkGuides = document.getElementById('chkExportIncludeGuides');
+  if (chkGuides) {
+    chkGuides.addEventListener('change', (e) => {
+      state.exportState.includeGuides = e.target.checked;
+      updateExportUIAndPreview();
+    });
+  }
+  const chkHeader = document.getElementById('chkExportIncludeHeader');
+  if (chkHeader) {
+    chkHeader.addEventListener('change', (e) => {
+      state.exportState.includeHeader = e.target.checked;
       updateExportUIAndPreview();
     });
   }
@@ -3772,7 +3871,10 @@ function setupSaveModalControls() {
   if (btnAdd) btnAdd.addEventListener('click', handlePerformAddToStudio);
 }
 
-function openSavePhotoModal(target = 'photo', photoIdx = null) {
+function openSavePhotoModal(target = null, photoIdx = null) {
+  if (!target) {
+    target = (state.activeTab === 'crop') ? 'photo' : 'sheet';
+  }
   state.exportState.target = target;
   if (photoIdx !== null && photoIdx >= 0 && photoIdx < state.photos.length) {
     state.exportState.targetPhotoIdx = photoIdx;
@@ -3780,11 +3882,23 @@ function openSavePhotoModal(target = 'photo', photoIdx = null) {
     state.exportState.targetPhotoIdx = state.activePhotoIdx;
   }
 
-  const photo = state.photos[state.exportState.targetPhotoIdx] || state.photos[0];
-  const safeName = (photo ? photo.name : 'Photo').replace(/[^a-zA-Z0-9_-]/g, '_');
-  state.exportState.filename = `Lemon_${safeName}_${state.exportState.preset}.${state.exportState.format}`;
+  const isSheet = target === 'sheet';
+  const paperName = (PAPER_PRESETS[state.paperSize]?.name || 'A4').split(' ')[0];
+  const count = state.sheetItems.length;
+
+  if (isSheet) {
+    state.exportState.filename = `Lemon_${paperName}_Sheet_${count}_Photos.${state.exportState.format}`;
+  } else {
+    const photo = state.photos[state.exportState.targetPhotoIdx] || state.photos[0];
+    const safeName = (photo ? photo.name : 'Photo').replace(/[^a-zA-Z0-9_-]/g, '_');
+    state.exportState.filename = `Lemon_${safeName}_${state.exportState.preset}.${state.exportState.format}`;
+  }
+
   const txtFn = document.getElementById('txtExportFilename');
-  if (txtFn) txtFn.value = state.exportState.filename;
+  if (txtFn) {
+    txtFn.value = state.exportState.filename;
+    delete txtFn.dataset.userEdited;
+  }
 
   const modal = document.getElementById('savePhotoModal');
   if (modal) modal.style.display = 'flex';
@@ -3811,6 +3925,36 @@ function updateExportUIAndPreview() {
   if (sizeGroup) sizeGroup.style.display = isTargetSheet ? 'none' : 'flex';
   const finishingGroup = document.getElementById('exportFinishingGroup');
   if (finishingGroup) finishingGroup.style.display = isTargetSheet ? 'none' : 'flex';
+
+  const sheetCard = document.getElementById('exportSheetInfoCard');
+  if (sheetCard) sheetCard.style.display = isTargetSheet ? 'flex' : 'none';
+
+  const paperName = (PAPER_PRESETS[state.paperSize]?.name || 'A4').split(' ')[0];
+  const count = state.sheetItems.length;
+
+  if (isTargetSheet) {
+    const titleEl = document.getElementById('lblExportSheetTitle');
+    if (titleEl) titleEl.textContent = `Full ${paperName} Sheet (${count} Photos)`;
+    const descEl = document.getElementById('lblExportSheetDesc');
+    if (descEl) descEl.textContent = `Exports the complete ${paperName} page with all ${count} passport photos arranged at 100% true-to-scale millimeter accuracy.`;
+
+    const txtFn = document.getElementById('txtExportFilename');
+    if (txtFn && (!txtFn.dataset.userEdited || txtFn.value.startsWith('Lemon_'))) {
+      const ext = exp.format === 'pdf' ? 'pdf' : (exp.format === 'png' ? 'png' : (exp.format === 'webp' ? 'webp' : 'jpg'));
+      txtFn.value = `Lemon_${paperName}_Sheet_${count}_Photos.${ext}`;
+      exp.filename = txtFn.value;
+    }
+
+    const btnSave = document.getElementById('btnExportSaveFile');
+    if (btnSave) {
+      btnSave.innerHTML = `💾 Download ${paperName} Sheet (${exp.format.toUpperCase()}) <span class="kbd-shortcut">⌘S</span>`;
+    }
+  } else {
+    const btnSave = document.getElementById('btnExportSaveFile');
+    if (btnSave) {
+      btnSave.innerHTML = `💾 Save Single Photo (${exp.format.toUpperCase()}) <span class="kbd-shortcut">⌘S</span>`;
+    }
+  }
 
   // 2. Sync Size Chips
   document.querySelectorAll('#exportSizeChipsContainer .export-chip').forEach(chip => {
@@ -3914,7 +4058,11 @@ function updateExportUIAndPreview() {
     pctx.scale(dpr, dpr);
 
     if (isTargetSheet) {
-      const baseSheet = generateSheet300DPICanvas();
+      const baseSheet = generateSheet300DPICanvas(150, {
+        showCropMarks: exp.includeGuides !== undefined ? exp.includeGuides : true,
+        showCutLines: exp.includeGuides !== undefined ? exp.includeGuides : true,
+        showSheetHeader: exp.includeHeader !== undefined ? exp.includeHeader : true
+      });
       pctx.drawImage(baseSheet.canvas, 0, 0, pw, ph);
     } else if (photo) {
       pctx.fillStyle = '#FFFFFF';
@@ -4083,20 +4231,13 @@ function generateExportPhotoCanvas(photo, options) {
 }
 
 function generateExportSheetCanvas(options) {
-  const baseRes = generateSheet300DPICanvas();
   const dpi = options.dpi || 300;
-  if (dpi === 300) return baseRes.canvas;
-
-  const paperMM = getPaperDimensionsMM();
-  const pixelW = Math.round((paperMM.w / 25.4) * dpi);
-  const pixelH = Math.round((paperMM.h / 25.4) * dpi);
-
-  const scaledCanvas = document.createElement('canvas');
-  scaledCanvas.width = pixelW;
-  scaledCanvas.height = pixelH;
-  const ctx = scaledCanvas.getContext('2d');
-  ctx.drawImage(baseRes.canvas, 0, 0, pixelW, pixelH);
-  return scaledCanvas;
+  const res = generateSheet300DPICanvas(dpi, {
+    showCropMarks: options.includeGuides !== undefined ? options.includeGuides : true,
+    showCutLines: options.includeGuides !== undefined ? options.includeGuides : true,
+    showSheetHeader: options.includeHeader !== undefined ? options.includeHeader : true
+  });
+  return res.canvas;
 }
 
 function createSingleImagePDFBlob(jpegUint8Array, widthPx, heightPx, widthMM, heightMM) {
@@ -4222,7 +4363,10 @@ function handlePerformSave() {
             showToast(`💾 Exported: <b>${filename}</b> (${Math.round(widthMM)}×${Math.round(heightMM)} mm PDF)`);
             if (btnSave) {
               btnSave.disabled = false;
-              btnSave.innerHTML = `💾 Save / Download to Mac <span class="kbd-shortcut">⌘S</span>`;
+              const pName = (PAPER_PRESETS[state.paperSize]?.name || 'A4').split(' ')[0];
+              btnSave.innerHTML = isTargetSheet
+                ? `💾 Download ${pName} Sheet (${exp.format.toUpperCase()}) <span class="kbd-shortcut">⌘S</span>`
+                : `💾 Save Single Photo (${exp.format.toUpperCase()}) <span class="kbd-shortcut">⌘S</span>`;
             }
           };
           reader.readAsArrayBuffer(jpegBlob);
@@ -4238,7 +4382,10 @@ function handlePerformSave() {
           showToast(`💾 Exported: <b>${filename}</b> (${canvas.width}×${canvas.height} px)`);
           if (btnSave) {
             btnSave.disabled = false;
-            btnSave.innerHTML = `💾 Save / Download to Mac <span class="kbd-shortcut">⌘S</span>`;
+            const pName = (PAPER_PRESETS[state.paperSize]?.name || 'A4').split(' ')[0];
+            btnSave.innerHTML = isTargetSheet
+              ? `💾 Download ${pName} Sheet (${exp.format.toUpperCase()}) <span class="kbd-shortcut">⌘S</span>`
+              : `💾 Save Single Photo (${exp.format.toUpperCase()}) <span class="kbd-shortcut">⌘S</span>`;
           }
         }, mime, qual);
       }
@@ -4247,7 +4394,10 @@ function handlePerformSave() {
       alert(`Save error: ${err.message}`);
       if (btnSave) {
         btnSave.disabled = false;
-        btnSave.innerHTML = `💾 Save / Download to Mac <span class="kbd-shortcut">⌘S</span>`;
+        const pName = (PAPER_PRESETS[state.paperSize]?.name || 'A4').split(' ')[0];
+        btnSave.innerHTML = isTargetSheet
+          ? `💾 Download ${pName} Sheet (${exp.format.toUpperCase()}) <span class="kbd-shortcut">⌘S</span>`
+          : `💾 Save Single Photo (${exp.format.toUpperCase()}) <span class="kbd-shortcut">⌘S</span>`;
       }
     }
   }, 50);

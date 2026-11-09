@@ -49,9 +49,9 @@ cat << EOF > "${APP_BUNDLE}/Contents/Info.plist"
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.3.0</string>
+    <string>1.4.0</string>
     <key>CFBundleVersion</key>
-    <string>4</string>
+    <string>5</string>
     <key>LSMinimumSystemVersion</key>
     <string>13.0</string>
     <key>NSHighResolutionCapable</key>
@@ -148,12 +148,12 @@ if let img = NSImage(contentsOfFile: icns) {
 }
 '
 
-# Create versioned copy Lemon-v1.3.0.dmg
-echo "-> Creating versioned copy Lemon-v1.3.0.dmg..."
-cp -p "${DMG_PATH}" "${PROJECT_DIR}/Lemon-v1.3.0.dmg"
+# Create versioned copy Lemon-v1.4.0.dmg
+echo "-> Creating versioned copy Lemon-v1.4.0.dmg..."
+cp -p "${DMG_PATH}" "${PROJECT_DIR}/Lemon-v1.4.0.dmg"
 swift -e '
 import AppKit
-let dmg = "'"${PROJECT_DIR}"'/Lemon-v1.3.0.dmg"
+let dmg = "'"${PROJECT_DIR}"'/Lemon-v1.4.0.dmg"
 let icns = "'"${PROJECT_DIR}"'/Resources/AppIcon.icns"
 if let img = NSImage(contentsOfFile: icns) {
     _ = NSWorkspace.shared.setIcon(img, forFile: dmg, options: [])
@@ -163,7 +163,7 @@ if let img = NSImage(contentsOfFile: icns) {
 # Copy to Desktop
 echo "-> Copying DMGs to Desktop..."
 cp -p "${DMG_PATH}" "/Users/lemon/Desktop/Lemon.dmg"
-cp -p "${PROJECT_DIR}/Lemon-v1.3.0.dmg" "/Users/lemon/Desktop/Lemon-v1.3.0.dmg"
+cp -p "${PROJECT_DIR}/Lemon-v1.4.0.dmg" "/Users/lemon/Desktop/Lemon-v1.4.0.dmg"
 
 # 8. Install directly into /Applications
 echo "-> Installing to /Applications/${APP_NAME}.app..."
